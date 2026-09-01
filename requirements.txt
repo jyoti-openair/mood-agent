@@ -1,0 +1,17 @@
+# Web framework
+# (left unpinned/loose - Cognee pulls its own transitive deps and pinning
+# exact versions here causes pip's resolver to fail with "no matching
+# distributions" conflicts)
+fastapi>=0.110
+uvicorn[standard]>=0.30
+
+# Cognee - knowledge graph memory over the PDFs
+# Requires Python 3.10-3.14. If installation fails, check your Python
+# version first: python3 --version
+cognee>=0.3.0
+
+# Gemini (free tier) for the mood -> teaching bridge
+google-genai>=1.2.0
+
+python-dotenv>=1.0
+pydantic>=2.0
