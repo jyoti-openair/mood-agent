@@ -1,0 +1,9 @@
+.venv
+__pycache__
+*.pyc
+.git
+.gitignore
+.elasticbeanstalk
+ingest_log.txt
+*.md
+.DS_Store

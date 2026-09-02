@@ -58,8 +58,7 @@ ingested.
 ## 5. Run the app
 
 ```bash
-cd backend
-uvicorn main:app --reload
+uvicorn backend.main:app --reload
 ```
 
 Open http://127.0.0.1:8000 — that's the funky frontend, served by the same
