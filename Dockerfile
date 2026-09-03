@@ -20,8 +20,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-# 4. Copy PDF Data Directory explicitly
-COPY data/pdfs ./data/pdfs
 
 # 5. Copy the rest of the Application Source Code
 COPY . .

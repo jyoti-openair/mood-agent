@@ -4,5 +4,5 @@ __pycache__/
 *.pyc
 .cognee/
 .elasticbeanstalk
-data/pdfs/*.pdf
+pdfs/*.pdf
 ingest_log.txt

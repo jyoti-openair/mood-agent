@@ -26,7 +26,6 @@ load_dotenv(
 
 PDF_DIR = (
     Path(__file__).resolve().parent.parent
-    / "data"
     / "pdfs"
 )
 

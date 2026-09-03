@@ -34,7 +34,7 @@ graph — one key covers both, no OpenAI account needed.
 Drop the whole folder (subfolders are fine) into:
 
 ```
-data/pdfs/
+/pdfs/
 ```
 
 ## 4. Build the knowledge graph
@@ -53,7 +53,7 @@ ingested.
 
 > Hitting Gemini free-tier rate limits during ingestion? Cognee will retry,
 > but on a very large library it's worth ingesting in a few batches (move a
-> subset of PDFs into `data/pdfs`, ingest, add the rest, ingest again).
+> subset of PDFs into `pdfs`, ingest, add the rest, ingest again).
 
 ## 5. Run the app
 
