@@ -5,13 +5,14 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from backend import cognee_service
+from backend.drive_ingest import download_pdfs_from_drive
 from backend.moods import MOODS, get_mood
 
 app = FastAPI(title="Mood Bridge")
@@ -42,6 +43,41 @@ class ReflectResponse(BaseModel):
 
 
 # ---------------------------------------------------------
+# Ingest state (in-memory; resets on restart
+# ---------------------------------------------------------
+
+_ingest_status = {"state": "idle", "detail": None}
+
+
+def _require_api_key(provided_key: str | None) -> None:
+    expected = os.environ.get("INGEST_API_KEY")
+    if not expected:
+        raise HTTPException(
+            status_code=500,
+            detail="INGEST_API_KEY is not configured on the server.",
+        )
+    if provided_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key.")
+
+
+async def _run_ingestion(dataset_name: str) -> None:
+    _ingest_status.update(state="downloading", detail=None)
+    try:
+        folder_url = os.environ.get("GDRIVE_FOLDER_URL")
+        if not folder_url:
+            raise RuntimeError("GDRIVE_FOLDER_URL is not configured on the server.")
+
+        downloaded = download_pdfs_from_drive(folder_url)
+        _ingest_status.update(state="ingesting", detail=f"{len(downloaded)} files downloaded")
+
+        result = await cognee_service.ingest_pdf_library(dataset_name=dataset_name)
+
+        _ingest_status.update(state="done", detail=result)
+    except Exception as e:
+        _ingest_status.update(state="failed", detail=f"{type(e).__name__}: {e}")
+
+
+# ---------------------------------------------------------
 # API Endpoints
 # ---------------------------------------------------------
 
@@ -50,13 +86,36 @@ def list_moods():
     return MOODS
 
 
-@app.post("/api/ingest")
-async def ingest():
+# Add this lightweight endpoint to main.py
+@app.get("/api/admin/run-ingest")
+async def run_manual_ingest(secret: str = ""):
+    # Quick guard so random crawlers don't trigger it
+    if secret != "my-one-time-secret":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     try:
-        result = await cognee_service.ingest_pdf_library()
-        return result
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        folder_url = os.environ.get("GDRIVE_FOLDER_URL")
+        if not folder_url:
+            raise HTTPException(status_code=500, detail="GDRIVE_FOLDER_URL missing")
+
+        # 1. Download
+        downloaded = download_pdfs_from_drive(folder_url)
+
+        # 2. Ingest
+        result = await cognee_service.ingest_pdf_library(dataset_name="teachings")
+
+        return {
+            "status": "success",
+            "files_downloaded": len(downloaded),
+            "detail": result,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/ingest/status")
+def ingest_status():
+    return _ingest_status
 
 
 @app.post("/api/reflect", response_model=ReflectResponse)
@@ -69,13 +128,8 @@ async def reflect(req: ReflectRequest):
         )
 
     try:
-        # 1. Query Cognee graph for real excerpts matching the mood.
-        #    query_teaching is async -> must be awaited.
         retrieval = await cognee_service.query_teaching(mood)
 
-        # 2. Synthesize teachings + generate the image prompt.
-        #    generate_teaching_and_prompt is a regular (sync) function
-        #    -> call it directly, no await.
         data = cognee_service.generate_teaching_and_prompt(
             mood_label=mood["label"],
             user_context=req.context,
@@ -83,7 +137,6 @@ async def reflect(req: ReflectRequest):
             graph_answers=retrieval.get("graph_answers", []),
         )
 
-        # 3. Attempt image generation (also sync).
         image_url = cognee_service.generate_mood_image(
             data.get("image_prompt", "")
         )
@@ -109,7 +162,6 @@ async def reflect(req: ReflectRequest):
 frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
 
 if not frontend_dir.exists():
-    # Fallback if frontend is at root relative to main.py
     frontend_dir = Path(__file__).resolve().parent / "frontend"
 
 app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")

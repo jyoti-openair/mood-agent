@@ -1,34 +1,24 @@
-"""
-Run this once (and again whenever you add new PDFs) to build the knowledge
-graph:
-
-    python scripts/ingest_pdfs.py
-
-With a large library (dozens of PDFs) this will take a while - cognify()
-calls an LLM to extract entities and relationships per chunk of text.
-Leave it running; it prints progress as it goes.
-"""
-
 import asyncio
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+# Add the project root (mood-agent/) to sys.path so `backend` is importable
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-
-import cognee_service
-
+from backend import cognee_service
 
 async def main():
-    print(f"Scanning '{cognee_service.PDF_DIR}' for PDFs...")
-    result = await cognee_service.ingest_pdf_library()
-    print(f"\nDone. Ingested {result['files_ingested']} files into "
-          f"dataset '{result['dataset']}':")
+    dataset_name = sys.argv[1] if len(sys.argv) > 1 else "teachings"
+
+    result = await cognee_service.ingest_pdf_library(
+        dataset_name=dataset_name,
+    )
+
+    print("\n========== INGEST COMPLETE ==========")
+    print("Dataset:", result["dataset"])
+    print("Files ingested:", result["files_ingested"])
     for p in result["paths"]:
-        print(f"  - {p}")
+        print(" -", p)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import cognee
 from cognee.modules.search.types import SearchType
+from backend.config import PDF_DIR
 
 
 # ---------------------------------------------------------
@@ -617,3 +618,18 @@ async def ingest_pdf_library(
         "files_ingested": len(file_paths),
         "paths": file_paths,
     }
+
+async def ingest_pdf_library(dataset_name: str = "teachings"):
+    """
+    Reads PDFs from PDF_DIR and processes them into Cognee's graph memory.
+    """
+    if not PDF_DIR.exists() or not any(PDF_DIR.iterdir()):
+        return "No PDFs found in the directory to ingest."
+
+    # 1. Add PDF directory path to Cognee
+    await cognee.add(str(PDF_DIR), dataset_name=dataset_name)
+
+    # 2. Extract entities and build graph database
+    await cognee.cognify(dataset_name=dataset_name)
+
+    return f"Successfully ingested PDFs into dataset '{dataset_name}'."
