@@ -621,19 +621,19 @@ async def ingest_pdf_library(
 async def ingest_pdf_library(dataset_name: str = "teachings"):
     target_dir = PDF_DIR.resolve()
 
-    # Find all downloaded PDF files
+    # Match all PDF files in the target directory
     pdf_files = list(target_dir.glob("*.pdf"))
 
     if not pdf_files:
         return f"No PDFs found in {target_dir} to ingest."
 
-    # Convert paths to string representations for Cognee
-    file_paths = [str(file_path) for file_path in pdf_files]
+    # Convert absolute Path objects to string paths
+    file_paths = [str(f) for f in pdf_files]
 
-    # 1. Add individual PDF files directly to Cognee
+    # 1. Add PDF files to Cognee
     await cognee.add(file_paths, dataset_name=dataset_name)
 
-    # 2. Build the knowledge graph
+    # 2. Cognify (build graph)
     await cognee.cognify(dataset_name=dataset_name)
 
-    return f"Successfully ingested {len(file_paths)} PDF(s) into dataset '{dataset_name}'."
+    return f"Successfully ingested {len(file_paths)} PDF file(s) into dataset '{dataset_name}'."

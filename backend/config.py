@@ -5,10 +5,13 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 
-# Path definitions
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent
-PDF_DIR = BASE_DIR / "pdfs"
+# Project root: /opt/render/project/src/
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Centralized PDF directory: /opt/render/project/src/pdfs
+PDF_DIR = PROJECT_ROOT / "pdfs"
+
+
 
 # Load environment variables
 load_dotenv(PROJECT_ROOT / ".env", override=True)
