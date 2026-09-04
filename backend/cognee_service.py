@@ -6,6 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 import cognee
+from litellm import completion
 from cognee.modules.search.types import SearchType
 from backend.config import PDF_DIR
 
@@ -130,148 +131,51 @@ Return JSON when possible:
 def generate_teaching_and_prompt(
     mood_label: str,
     user_context: str,
-    raw_excerpts: list[str],
-    graph_answers: list[str] = None,
+    raw_excerpts: list,
+    graph_answers: list,
 ) -> dict:
+    context_text = "\n---\n".join([str(e) for e in (raw_excerpts + graph_answers)])
 
-    print("\n========== REFLECT START ==========")
-    print("Mood:", mood_label)
-    print("User context length:", len(user_context or ""))
-    print("Graph answers:", len(graph_answers or []))
-    print("Raw excerpts:", len(raw_excerpts or []))
-
-    client = _get_client()
-
-    # IMPORTANT:
-    # This must be exactly the Gemini model name.
-    model = os.getenv(
-        "GEMINI_MODEL",
-        "gemini-3.6-flash",
+    system_prompt = (
+        "You are a warm, compassionate guide helping people navigate difficult emotions.\n"
+        "Your answers MUST be derived ONLY and EXCLUSIVELY from the provided Source Documents.\n\n"
+        "STRICT GROUNDING RULES:\n"
+        "1. Do NOT use any external knowledge, personal assumptions, or general training data.\n"
+        "2. If the answer cannot be directly and fully answered using ONLY the Source Documents, "
+        "state explicitly: 'The ingested PDF documents do not contain sufficient information to answer this.'\n"
+        "3. Do not mention PDFs, documents, or source material in the response.\n\n"
+        "FORMATTING RULES:\n"
+        "1. Do NOT use markdown section headers (such as #, ##, * **, -- or ###).\n"
+        "2. Do NOT use horizontal rules or line dividers (such as --- or ***).\n"
+        "3. Present key concepts using inline bolding for key phrases and clean bullet points (*).\n"
+        "4. Keep the tone warm, clear, and highly readable."
     )
 
-    print("DEBUG: Gemini model =", repr(model))
+    user_prompt = f"""
+SOURCE DOCUMENTS:
+{context_text}
 
-    retrieved_material = (
-        "SUMMARIES:\n"
-        + "\n---\n".join(
-            graph_answers or ["(none)"]
-        )
+USER MOOD: {mood_label}
+USER CONTEXT: {user_context}
+
+INSTRUCTION: Provide a clear, gentle reflection for the user using ONLY the SOURCE DOCUMENTS provided above.
+"""
+
+    response = completion(
+        model=os.environ.get("LLM_MODEL", "gemini/gemini-1.5-flash"),
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.0,
     )
 
-    retrieved_material += (
-        "\n\nRAW EXCERPTS FROM BOOKS:\n"
-        + "\n---\n".join(
-            raw_excerpts or ["(none)"]
-        )
-    )
+    content = response.choices[0].message.content
 
-    prompt = (
-        f"User mood: {mood_label}\n"
-        f"User context: {user_context}\n\n"
-        f"{retrieved_material}"
-    )
-
-    print(
-        "DEBUG: Prompt length =",
-        len(prompt),
-    )
-
-    # -----------------------------------------------------
-    # Gemini call
-    # -----------------------------------------------------
-
-    print("DEBUG: Calling Gemini...")
-
-    try:
-
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_INSTRUCTION,
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-            temperature=0.7,
-        )
-
-        print("DEBUG: Gemini response received")
-
-    except Exception as e:
-
-        print("\n========== GEMINI ERROR ==========")
-        print("Exception type:", type(e).__name__)
-        print("Exception:", repr(e))
-        print("Model:", repr(model))
-        print(
-            "API key configured:",
-            bool(os.getenv("GEMINI_API_KEY")),
-        )
-        print("==================================\n")
-
-        raise
-
-    # -----------------------------------------------------
-    # Parse response
-    # -----------------------------------------------------
-
-    try:
-
-        raw_content = (
-            response.choices[0]
-            .message
-            .content
-            .strip()
-        )
-
-        print(
-            "DEBUG: Gemini response length =",
-            len(raw_content),
-        )
-
-        # Remove markdown code fences if Gemini returns them
-        if raw_content.startswith("```"):
-
-            raw_content = (
-                raw_content
-                .split("```")[1]
-            )
-
-            if raw_content.startswith("json"):
-                raw_content = raw_content[4:]
-
-        parsed = json.loads(
-            raw_content.strip()
-        )
-
-        print("DEBUG: JSON parsed successfully")
-        print("========== REFLECT SUCCESS ==========\n")
-
-        return parsed
-
-    except Exception as e:
-
-        print(
-            "DEBUG: Gemini did not return valid JSON:",
-            repr(e),
-        )
-
-        # Fallback to plain text response
-        return {
-            "response": response.choices[0]
-            .message
-            .content,
-            "image_prompt": (
-                "Flat cartoon illustration, minimal color "
-                "palette, single splash of color accent, "
-                "a small figure resting peacefully in warm "
-                f"light, representing calm after {mood_label}"
-            ),
-        }
+    return {
+        "response": content,
+        "image_prompt": f"A peaceful, atmospheric background matching the mood: {mood_label}",
+    }
 
 
 # ---------------------------------------------------------
@@ -563,77 +467,27 @@ async def query_teaching(
 # Ingest PDF library
 # ---------------------------------------------------------
 
-async def ingest_pdf_library(
-    dataset_name: str = "teachings",
-) -> dict:
-
-    """
-    Scans PDF_DIR for PDF files, adds them to Cognee,
-    and runs cognify() to extract entity/relationship
-    knowledge graphs.
-    """
-
-    if not PDF_DIR.exists():
-
-        raise FileNotFoundError(
-            f"PDF directory not found at: {PDF_DIR}"
-        )
-
-    pdf_files = list(
-        PDF_DIR.glob("*.pdf")
-    )
-
-    if not pdf_files:
-
-        raise FileNotFoundError(
-            "No PDF files found inside: "
-            f"{PDF_DIR}"
-        )
-
-    file_paths = [
-        str(pdf)
-        for pdf in pdf_files
-    ]
-
-    print(
-        "Ingesting",
-        len(file_paths),
-        "PDF files..."
-    )
-
-    # Add PDFs
-    await cognee.add(
-        file_paths,
-        dataset_name=dataset_name,
-    )
-
-    # Build knowledge graph and vector indices
-    await cognee.cognify(
-        dataset_name=dataset_name,
-    )
-
-    return {
-        "dataset": dataset_name,
-        "files_ingested": len(file_paths),
-        "paths": file_paths,
-    }
 
 async def ingest_pdf_library(dataset_name: str = "teachings"):
     target_dir = PDF_DIR.resolve()
-
-    # Match all PDF files in the target directory
     pdf_files = list(target_dir.glob("*.pdf"))
 
     if not pdf_files:
         return f"No PDFs found in {target_dir} to ingest."
 
-    # Convert absolute Path objects to string paths
     file_paths = [str(f) for f in pdf_files]
 
-    # 1. Add PDF files to Cognee
+    # Optional: Configure smaller chunk sizes to prevent text truncation
+    cognee.config.chunk_size = 512
+    cognee.config.chunk_overlap = 64
+
+    # 1. Clear previous dataset state if clean re-ingestion is needed
+    # await cognee.prune.prune_data()
+
+    # 2. Add files to Cognee
     await cognee.add(file_paths, dataset_name=dataset_name)
 
-    # 2. Cognify (build graph)
+    # 3. Build knowledge graph across ALL chunks
     await cognee.cognify(dataset_name=dataset_name)
 
     return f"Successfully ingested {len(file_paths)} PDF file(s) into dataset '{dataset_name}'."
