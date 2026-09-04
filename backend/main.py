@@ -154,6 +154,15 @@ async def reflect(req: ReflectRequest):
             detail=f"Reflection generation failed: {str(e)}",
         )
 
+@app.get("/api/knowledge/graph")
+async def get_raw_graph(dataset_name: str = "teachings"):
+    """Returns raw nodes and edges stored in Cognee."""
+    try:
+        # Retrieve graph memory structure
+        graph_data = await cognee.prune.get_graph_data(dataset_name)
+        return {"graph": graph_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ---------------------------------------------------------
 # Frontend Static Mounting (Must remain at the bottom)
