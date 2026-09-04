@@ -105,10 +105,16 @@ def extract_drive_id(url_or_id: str) -> str:
 
 def _download_single_drive_file(file_id: str) -> str:
     os.makedirs(DATA_DIR, exist_ok=True)
-    download_url = f"https://drive.google.com/uc?id={file_id}"
     output_path = os.path.join(DATA_DIR, f"{file_id}.pdf")
     
-    downloaded = gdown.download(download_url, output_path, quiet=False)
+    # Use id= directly with fuzzy=True to bypass download confirmation screens
+    downloaded = gdown.download(
+        id=file_id, 
+        output=output_path, 
+        quiet=False, 
+        fuzzy=True
+    )
+    
     if not downloaded or not os.path.exists(output_path):
         raise RuntimeError("Failed to download file from Google Drive. Ensure link sharing is enabled.")
     return output_path
