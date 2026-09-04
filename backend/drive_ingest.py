@@ -1,41 +1,56 @@
-import shutil
+import gc
+import os
 from pathlib import Path
-import gdown
+from pypdf import PdfReader, PdfWriter
+import cognee
 
-from backend.config import PDF_DIR
+def download_pdf_if_not_exists(file_url: str, output_path: str) -> str:
+    """Downloads a PDF only if it doesn't already exist on disk."""
+    if os.path.exists(output_path):
+        print(f"Skipping download: {output_path} already exists.")
+        return output_path
+
+    print(f"Downloading file to {output_path}...")
+    # Replace this line with your actual gdown / drive download call:
+    # gdown.download(file_url, output_path, quiet=False)
+    return output_path
 
 
-def download_pdfs_from_drive(folder_url: str) -> list[str]:
-    # Resolve absolute path
-    target_dir = PDF_DIR.resolve()
-    target_dir.mkdir(parents=True, exist_ok=True)
+async def chunk_and_ingest_pdf(file_path: str, dataset_name: str = "teachings", chunk_size: int = 10):
+    """Splits a PDF into 10-page chunks and ingests them sequentially to save RAM."""
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
 
-    tmp_dir = target_dir.parent / "_drive_tmp"
-    if tmp_dir.exists():
-        shutil.rmtree(tmp_dir, ignore_errors=True)
-    tmp_dir.mkdir(parents=True, exist_ok=True)
+    reader = PdfReader(file_path)
+    total_pages = len(reader.pages)
+    base_name = Path(file_path).stem
 
-    # Download from Google Drive
-    gdown.download_folder(
-        url=folder_url,
-        output=str(tmp_dir),
-        quiet=False,
-        use_cookies=False,
-    )
+    print(f"Processing {base_name} ({total_pages} total pages in {chunk_size}-page chunks)")
 
-    downloaded = []
-    # Search recursively in temp dir for downloaded PDFs
-    for pdf_path in tmp_dir.rglob("*.pdf"):
-        dest = target_dir / pdf_path.name
-        shutil.move(str(pdf_path), dest)
-        downloaded.append(str(dest))
+    for start_page in range(0, total_pages, chunk_size):
+        end_page = min(start_page + chunk_size, total_pages)
+        writer = PdfWriter()
 
-    # Clean up temp folder
-    shutil.rmtree(tmp_dir, ignore_errors=True)
+        # Extract 10-page slice
+        for page_num in range(start_page, end_page):
+            writer.add_page(reader.pages[page_num])
 
-    if not downloaded:
-        raise FileNotFoundError(
-            f"No PDF files were downloaded into {target_dir}. Check Google Drive folder permissions."
-        )
+        chunk_filename = f"{base_name}_part_{start_page + 1}_to_{end_page}.pdf"
+        
+        # Save temporary mini-PDF
+        with open(chunk_filename, "wb") as f:
+            writer.write(f)
 
-    return downloaded
+        try:
+            print(f"Ingesting chunk: {chunk_filename}")
+            await cognee.add(chunk_filename, dataset_name)
+            await cognee.cognify(dataset_name)
+        finally:
+            # Clean up mini-PDF slice
+            if os.path.exists(chunk_filename):
+                os.remove(chunk_filename)
+            
+            # Force RAM cleanup
+            gc.collect()
+
+    print(f"Finished ingesting {base_name}")

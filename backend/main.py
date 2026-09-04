@@ -1,4 +1,6 @@
 import os
+import shutil
+import tarfile
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -19,7 +21,7 @@ if not os.environ.get("COGNEE_DATA_ROOT_DIRECTORY"):
 # 3. NOW import cognee safely
 import cognee
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -95,9 +97,12 @@ async def _run_ingestion(dataset_name: str) -> None:
         downloaded = await run_in_threadpool(download_pdfs_from_drive, folder_url)
         _ingest_status.update(state="ingesting", detail=f"{len(downloaded)} files downloaded")
 
-        result = await cognee_service.chunk_and_ingest_pdf(dataset_name=dataset_name)
+        results = []
+        for file_path in downloaded:
+            res = await cognee_service.chunk_and_ingest_pdf(file_path=file_path, dataset_name=dataset_name)
+            results.append(res)
 
-        _ingest_status.update(state="done", detail=result)
+        _ingest_status.update(state="done", detail=f"Processed {len(results)} files")
     except Exception as e:
         _ingest_status.update(state="failed", detail=f"{type(e).__name__}: {e}")
 
@@ -111,7 +116,7 @@ def list_moods():
     return MOODS
 
 
-@app.get("/api/admin/run-ingest")
+@app.get("/api/admin/run-ingest", include_in_schema=False)
 async def run_manual_ingest(secret: str = ""):
     if secret != "my-one-time-secret":
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -121,19 +126,46 @@ async def run_manual_ingest(secret: str = ""):
         if not folder_url:
             raise HTTPException(status_code=500, detail="GDRIVE_FOLDER_URL missing")
 
-        # 1. Download safely on threadpool to avoid event loop freezing
+        # 1. Download safely on threadpool
         downloaded = await run_in_threadpool(download_pdfs_from_drive, folder_url)
 
-        # 2. Ingest
-        result = await cognee_service.chunk_and_ingest_pdf(dataset_name="teachings")
+        # 2. Ingest PDFs one-by-one with page chunking
+        results = []
+        for file_path in downloaded:
+            res = await cognee_service.chunk_and_ingest_pdf(file_path=file_path, dataset_name="teachings")
+            results.append(res)
 
         return {
             "status": "success",
             "files_downloaded": len(downloaded),
-            "detail": result,
+            "files_processed": len(results),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/upload-cognee", include_in_schema=False)
+async def upload_cognee_backup(secret: str = "", file: UploadFile = File(...)):
+    if secret != "my-one-time-secret":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    tar_path = BASE_DIR / "temp_cognee.tar.gz"
+
+    try:
+        with open(tar_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        with tarfile.open(tar_path, "r:gz") as tar:
+            tar.extractall(path=BASE_DIR)
+
+        if tar_path.exists():
+            tar_path.unlink()
+
+        return {"status": "success", "message": "Successfully unpacked .cognee archive!"}
+    except Exception as e:
+        if tar_path.exists():
+            tar_path.unlink()
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
 @app.get("/api/ingest/status")
@@ -182,7 +214,7 @@ async def reflect(req: ReflectRequest):
 # Frontend Static Mounting (Must remain at the bottom)
 # ---------------------------------------------------------
 
-frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+frontend_dir = BASE_DIR / "frontend"
 
 if not frontend_dir.exists():
     frontend_dir = Path(__file__).resolve().parent / "frontend"
