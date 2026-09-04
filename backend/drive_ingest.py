@@ -1,56 +1,41 @@
-import gc
 import os
+import gdown
 from pathlib import Path
-from pypdf import PdfReader, PdfWriter
-import cognee
 
-def download_pdf_if_not_exists(file_url: str, output_path: str) -> str:
-    """Downloads a PDF only if it doesn't already exist on disk."""
-    if os.path.exists(output_path):
-        print(f"Skipping download: {output_path} already exists.")
-        return output_path
-
-    print(f"Downloading file to {output_path}...")
-    # Replace this line with your actual gdown / drive download call:
-    # gdown.download(file_url, output_path, quiet=False)
-    return output_path
-
-
-async def chunk_and_ingest_pdf(file_path: str, dataset_name: str = "teachings", chunk_size: int = 10):
-    """Splits a PDF into 10-page chunks and ingests them sequentially to save RAM."""
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    reader = PdfReader(file_path)
-    total_pages = len(reader.pages)
-    base_name = Path(file_path).stem
-
-    print(f"Processing {base_name} ({total_pages} total pages in {chunk_size}-page chunks)")
-
-    for start_page in range(0, total_pages, chunk_size):
-        end_page = min(start_page + chunk_size, total_pages)
-        writer = PdfWriter()
-
-        # Extract 10-page slice
-        for page_num in range(start_page, end_page):
-            writer.add_page(reader.pages[page_num])
-
-        chunk_filename = f"{base_name}_part_{start_page + 1}_to_{end_page}.pdf"
+def download_pdfs_from_drive(folder_url: str, output_dir: str = "./pdfs") -> list[str]:
+    """
+    Downloads PDFs from a Google Drive folder only if the output directory is empty.
+    If PDFs are already present locally, it skips downloading and returns existing paths.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # 1. Check for existing PDFs in the target directory
+    existing_pdfs = [
+        os.path.join(output_dir, f) 
+        for f in os.listdir(output_dir) 
+        if f.lower().endswith(".pdf")
+    ]
+    
+    # 2. Skip downloading if PDFs already exist locally
+    if existing_pdfs:
+        print(f"Found {len(existing_pdfs)} existing PDF(s) in '{output_dir}'. Skipping download.")
+        return sorted(existing_pdfs)
         
-        # Save temporary mini-PDF
-        with open(chunk_filename, "wb") as f:
-            writer.write(f)
-
-        try:
-            print(f"Ingesting chunk: {chunk_filename}")
-            await cognee.add(chunk_filename, dataset_name)
-            await cognee.cognify(dataset_name)
-        finally:
-            # Clean up mini-PDF slice
-            if os.path.exists(chunk_filename):
-                os.remove(chunk_filename)
-            
-            # Force RAM cleanup
-            gc.collect()
-
-    print(f"Finished ingesting {base_name}")
+    print(f"No existing PDFs found in '{output_dir}'. Downloading from Google Drive...")
+    
+    # 3. Download folder content using gdown
+    gdown.download_folder(
+        url=folder_url,
+        output=output_dir,
+        quiet=False,
+        use_cookies=False
+    )
+    
+    # 4. Gather and return newly downloaded PDF paths
+    downloaded_pdfs = [
+        os.path.join(output_dir, f) 
+        for f in os.listdir(output_dir) 
+        if f.lower().endswith(".pdf")
+    ]
+    
+    return sorted(downloaded_pdfs)
