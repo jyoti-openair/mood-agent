@@ -7,10 +7,20 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 
 import cognee
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+# Import SearchType safely from cognee
+try:
+    from cognee.modules.search.types import SearchType
+except ImportError:
+    try:
+        from cognee import SearchType
+    except ImportError:
+        SearchType = None
 
 from backend import cognee_service
 from backend.drive_ingest import download_pdfs_from_drive
@@ -68,7 +78,8 @@ async def _run_ingestion(dataset_name: str) -> None:
         if not folder_url:
             raise RuntimeError("GDRIVE_FOLDER_URL is not configured on the server.")
 
-        downloaded = download_pdfs_from_drive(folder_url)
+        # Run blocking gdown I/O in thread pool
+        downloaded = await run_in_threadpool(download_pdfs_from_drive, folder_url)
         _ingest_status.update(state="ingesting", detail=f"{len(downloaded)} files downloaded")
 
         result = await cognee_service.ingest_pdf_library(dataset_name=dataset_name)
@@ -97,8 +108,8 @@ async def run_manual_ingest(secret: str = ""):
         if not folder_url:
             raise HTTPException(status_code=500, detail="GDRIVE_FOLDER_URL missing")
 
-        # 1. Download
-        downloaded = download_pdfs_from_drive(folder_url)
+        # 1. Download safely on threadpool to avoid event loop freezing
+        downloaded = await run_in_threadpool(download_pdfs_from_drive, folder_url)
 
         # 2. Ingest
         result = await cognee_service.ingest_pdf_library(dataset_name="teachings")
@@ -121,24 +132,48 @@ def ingest_status():
 # Cognee Knowledge Base Routes
 # ---------------------------------------------------------
 
+from cognee.modules.search.types import SearchType
+
+
+def get_search_type(preferred_name: str):
+    """Dynamically retrieves a valid SearchType enum member safely."""
+    # 1. Try uppercase match (e.g. INSIGHTS)
+    if hasattr(SearchType, preferred_name.upper()):
+        return getattr(SearchType, preferred_name.upper())
+
+    # 2. Try lowercase match (e.g. insights)
+    if hasattr(SearchType, preferred_name.lower()):
+        return getattr(SearchType, preferred_name.lower())
+
+    # 3. Fall back to standard SEARCH or first available enum attribute
+    for fallback in ["SEARCH", "search", "COMPLETIONS", "completions"]:
+        if hasattr(SearchType, fallback):
+            return getattr(SearchType, fallback)
+
+    # 4. Fall back to the very first Enum member defined
+    return list(SearchType)[0]
+
+
+from typing import Optional
+
 @app.get("/api/knowledge/search")
-async def search_knowledge_base(q: str, dataset_name: str = "teachings"):
-    """
-    Query Cognee's search engine directly via URL parameters.
-    Usage: GET /api/knowledge/search?q=your_search_query
-    """
-    if not q.strip():
-        raise HTTPException(status_code=400, detail="Query parameter 'q' cannot be empty.")
+async def search_knowledge_base(q: Optional[str] = None):
+    """Query Cognee's search engine directly via URL parameters."""
+    if not q or not q.strip():
+        return {
+            "query": None,
+            "message": "Please supply a query parameter, e.g., /api/knowledge/search?q=what is mindfulness",
+            "results": []
+        }
 
     try:
+        query_type = get_search_type("INSIGHTS")
         results = await cognee.search(
-            query_type="INSIGHTS",
+            query_type=query_type,
             query_text=q,
-            dataset_name=dataset_name,
         )
         return {
             "query": q,
-            "dataset": dataset_name,
             "results": results,
         }
     except Exception as e:
@@ -149,15 +184,16 @@ async def search_knowledge_base(q: str, dataset_name: str = "teachings"):
 
 
 @app.get("/api/knowledge/graph")
-async def get_knowledge_graph(dataset_name: str = "teachings"):
-    """
-    Inspect the raw graph structure (nodes & edges) stored in Cognee.
-    Usage: GET /api/knowledge/graph
-    """
+async def get_knowledge_graph():
+    """Inspect knowledge graph elements stored in Cognee."""
     try:
-        graph_data = await cognee.prune.get_graph_data(dataset_name)
+        query_type = get_search_type("GRAPH_COMPLETIONS")
+
+        graph_data = await cognee.search(
+            query_type=query_type,
+            query_text="*",
+        )
         return {
-            "dataset": dataset_name,
             "graph": graph_data,
         }
     except Exception as e:
