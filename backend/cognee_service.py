@@ -493,40 +493,44 @@ async def ingest_pdf_library(dataset_name: str = "teachings"):
     return f"Successfully ingested {len(file_paths)} PDF file(s) into dataset '{dataset_name}'."
 
 
-import shutil
-import tarfile
-from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File
+import gc
+import os
+from pathlib import Path
+from pypdf import PdfReader, PdfWriter
+import cognee
 
-@app.post("/api/admin/upload-cognee", include_in_schema=False)
-async def upload_cognee_backup(
-    secret: str = "",
-    file: UploadFile = File(...)
-):
-    if secret != "my-one-time-secret":
-        raise HTTPException(status_code=401, detail="Unauthorized")
+async def chunk_and_ingest_pdf(file_path: str, dataset_name: str = "teachings", chunk_size: int = 10):
+    reader = PdfReader(file_path)
+    total_pages = len(reader.pages)
+    base_name = Path(file_path).stem
 
-    base_dir = Path(__file__).resolve().parent.parent
-    cognee_dir = base_dir / ".cognee"
-    tar_path = base_dir / "temp_cognee.tar.gz"
+    print(f"Processing {base_name} ({total_pages} total pages in {chunk_size}-page chunks)")
 
-    try:
-        # 1. Save uploaded tar.gz file locally on Render
-        with open(tar_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+    for start_page in range(0, total_pages, chunk_size):
+        end_page = min(start_page + chunk_size, total_pages)
+        writer = PdfWriter()
 
-        # 2. Extract tar.gz into the .cognee directory
-        with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall(path=base_dir)
+        # Extract 10-page slice
+        for page_num in range(start_page, end_page):
+            writer.add_page(reader.pages[page_num])
 
-        # 3. Clean up the temp archive file
-        if tar_path.exists():
-            tar_path.unlink()
+        chunk_filename = f"{base_name}_part_{start_page + 1}_to_{end_page}.pdf"
+        
+        # Save temporary mini-PDF
+        with open(chunk_filename, "wb") as f:
+            writer.write(f)
 
-        return {
-            "status": "success",
-            "message": "Successfully unpacked .cognee directory on Render!",
-        }
-    except Exception as e:
-        if tar_path.exists():
-            tar_path.unlink()
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        try:
+            # Ingest single mini-PDF into Cognee
+            print(f"Ingesting: {chunk_filename}")
+            await cognee.add(chunk_filename, dataset_name)
+            await cognee.cognify(dataset_name)
+        finally:
+            # Clean up mini-PDF file from disk
+            if os.path.exists(chunk_filename):
+                os.remove(chunk_filename)
+            
+            # Force garbage collection to free RAM
+            gc.collect()
+
+    print(f"Finished ingesting {base_name}")

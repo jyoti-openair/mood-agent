@@ -95,7 +95,7 @@ async def _run_ingestion(dataset_name: str) -> None:
         downloaded = await run_in_threadpool(download_pdfs_from_drive, folder_url)
         _ingest_status.update(state="ingesting", detail=f"{len(downloaded)} files downloaded")
 
-        result = await cognee_service.ingest_pdf_library(dataset_name=dataset_name)
+        result = await cognee_service.chunk_and_ingest_pdf(dataset_name=dataset_name)
 
         _ingest_status.update(state="done", detail=result)
     except Exception as e:
@@ -125,7 +125,7 @@ async def run_manual_ingest(secret: str = ""):
         downloaded = await run_in_threadpool(download_pdfs_from_drive, folder_url)
 
         # 2. Ingest
-        result = await cognee_service.ingest_pdf_library(dataset_name="teachings")
+        result = await cognee_service.chunk_and_ingest_pdf(dataset_name="teachings")
 
         return {
             "status": "success",
