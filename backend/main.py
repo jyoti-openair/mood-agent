@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import tarfile
 from pathlib import Path
@@ -20,8 +21,9 @@ if not os.environ.get("COGNEE_DATA_ROOT_DIRECTORY"):
 
 # 3. NOW import cognee safely
 import cognee
+import gdown
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -50,6 +52,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+DATA_DIR = BASE_DIR / "data"
+
 
 # ---------------------------------------------------------
 # Schemas
@@ -68,8 +72,13 @@ class ReflectResponse(BaseModel):
     source_excerpt_count: int
 
 
+class AdminDriveIngestRequest(BaseModel):
+    drive_url_or_id: str
+    dataset_name: str = "teachings"
+
+
 # ---------------------------------------------------------
-# Ingest state (in-memory; resets on restart)
+# Helpers & Security
 # ---------------------------------------------------------
 
 _ingest_status = {"state": "idle", "detail": None}
@@ -77,13 +86,32 @@ _ingest_status = {"state": "idle", "detail": None}
 
 def _require_api_key(provided_key: str | None) -> None:
     expected = os.environ.get("INGEST_API_KEY")
-    if not expected:
-        raise HTTPException(
-            status_code=500,
-            detail="INGEST_API_KEY is not configured on the server.",
-        )
-    if provided_key != expected:
+    if expected and provided_key != expected:
         raise HTTPException(status_code=401, detail="Invalid or missing API key.")
+
+
+def extract_drive_id(url_or_id: str) -> str:
+    patterns = [
+        r"file/d/([a-zA-Z0-9_-]+)",
+        r"id=([a-zA-Z0-9_-]+)",
+        r"^([a-zA-Z0-9_-]+)$"
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url_or_id)
+        if match:
+            return match.group(1)
+    raise ValueError("Invalid Google Drive URL or File ID format.")
+
+
+def _download_single_drive_file(file_id: str) -> str:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    download_url = f"https://drive.google.com/uc?id={file_id}"
+    output_path = os.path.join(DATA_DIR, f"{file_id}.pdf")
+    
+    downloaded = gdown.download(download_url, output_path, quiet=False)
+    if not downloaded or not os.path.exists(output_path):
+        raise RuntimeError("Failed to download file from Google Drive. Ensure link sharing is enabled.")
+    return output_path
 
 
 async def _run_ingestion(dataset_name: str) -> None:
@@ -101,7 +129,7 @@ async def _run_ingestion(dataset_name: str) -> None:
         for file_path in downloaded:
             res = await cognee_service.chunk_and_ingest_pdf(
                 file_path=file_path, 
-                dataset_name="teachings"
+                dataset_name=dataset_name
             )
             results.append(res)
             
@@ -117,6 +145,39 @@ async def _run_ingestion(dataset_name: str) -> None:
 @app.get("/api/moods")
 def list_moods():
     return MOODS
+
+
+@app.post("/api/admin/run-ingest")
+async def run_admin_ingest(
+    request: AdminDriveIngestRequest,
+    x_api_key: str | None = Header(None)
+):
+    _require_api_key(x_api_key)
+
+    try:
+        file_id = extract_drive_id(request.drive_url_or_id)
+        
+        # 1. Download file on threadpool to avoid blocking event loop
+        file_path = await run_in_threadpool(_download_single_drive_file, file_id)
+
+        # 2. Ingest into Cognee using local chunking & Ollama pipeline
+        res = await cognee_service.chunk_and_ingest_pdf(
+            file_path=file_path,
+            dataset_name=request.dataset_name
+        )
+
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "file_path": file_path,
+            "dataset_name": request.dataset_name,
+            "ingest_result": res,
+            "message": "Document downloaded and cognified successfully."
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Admin ingestion failed: {str(e)}")
 
 
 @app.get("/api/admin/run-ingest", include_in_schema=False)
