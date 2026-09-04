@@ -494,43 +494,51 @@ async def ingest_pdf_library(dataset_name: str = "teachings"):
 
 
 import gc
-import os
-from pathlib import Path
-from pypdf import PdfReader, PdfWriter
-import cognee
 
-async def chunk_and_ingest_pdf(file_path: str, dataset_name: str = "teachings", chunk_size: int = 10):
+from pypdf import PdfReader, PdfWriter
+
+
+async def chunk_and_ingest_pdf(file_path: str, dataset_name: str = "teachings", chunk_size: int = 10) -> dict:
+    """Splits a single PDF into 10-page chunks and ingests them sequentially to avoid OOM errors."""
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"PDF file not found at: {file_path}")
+
     reader = PdfReader(file_path)
     total_pages = len(reader.pages)
     base_name = Path(file_path).stem
 
-    print(f"Processing {base_name} ({total_pages} total pages in {chunk_size}-page chunks)")
+    print(f"Starting chunked ingestion for: {base_name} ({total_pages} pages)")
+
+    chunks_processed = 0
 
     for start_page in range(0, total_pages, chunk_size):
         end_page = min(start_page + chunk_size, total_pages)
         writer = PdfWriter()
 
-        # Extract 10-page slice
         for page_num in range(start_page, end_page):
             writer.add_page(reader.pages[page_num])
 
         chunk_filename = f"{base_name}_part_{start_page + 1}_to_{end_page}.pdf"
-        
-        # Save temporary mini-PDF
+
+        # Save mini PDF chunk
         with open(chunk_filename, "wb") as f:
             writer.write(f)
 
         try:
-            # Ingest single mini-PDF into Cognee
-            print(f"Ingesting: {chunk_filename}")
+            # Ingest chunk into Cognee
             await cognee.add(chunk_filename, dataset_name)
             await cognee.cognify(dataset_name)
+            chunks_processed += 1
         finally:
-            # Clean up mini-PDF file from disk
+            # Clean up mini PDF file from disk
             if os.path.exists(chunk_filename):
                 os.remove(chunk_filename)
             
             # Force garbage collection to free RAM
             gc.collect()
 
-    print(f"Finished ingesting {base_name}")
+    return {
+        "file": base_name,
+        "total_pages": total_pages,
+        "chunks_processed": chunks_processed,
+    }

@@ -99,9 +99,12 @@ async def _run_ingestion(dataset_name: str) -> None:
 
         results = []
         for file_path in downloaded:
-            res = await cognee_service.chunk_and_ingest_pdf(file_path=file_path, dataset_name=dataset_name)
+            res = await cognee_service.chunk_and_ingest_pdf(
+                file_path=file_path, 
+                dataset_name="teachings"
+            )
             results.append(res)
-
+            
         _ingest_status.update(state="done", detail=f"Processed {len(results)} files")
     except Exception as e:
         _ingest_status.update(state="failed", detail=f"{type(e).__name__}: {e}")
