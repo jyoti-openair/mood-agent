@@ -1,0 +1,18 @@
+
+
+services:
+  web:
+    build: .
+    container_name: mood-agent
+    restart: always
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - cognee_data:/app/.cognee
+      - pdf_data:/app/pdfs
+
+volumes:
+  cognee_data:
+  pdf_data:
