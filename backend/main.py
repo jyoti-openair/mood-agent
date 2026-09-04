@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 
+import cognee
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -43,7 +44,7 @@ class ReflectResponse(BaseModel):
 
 
 # ---------------------------------------------------------
-# Ingest state (in-memory; resets on restart
+# Ingest state (in-memory; resets on restart)
 # ---------------------------------------------------------
 
 _ingest_status = {"state": "idle", "detail": None}
@@ -86,10 +87,8 @@ def list_moods():
     return MOODS
 
 
-# Add this lightweight endpoint to main.py
 @app.get("/api/admin/run-ingest")
 async def run_manual_ingest(secret: str = ""):
-    # Quick guard so random crawlers don't trigger it
     if secret != "my-one-time-secret":
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -116,6 +115,56 @@ async def run_manual_ingest(secret: str = ""):
 @app.get("/api/ingest/status")
 def ingest_status():
     return _ingest_status
+
+
+# ---------------------------------------------------------
+# Cognee Knowledge Base Routes
+# ---------------------------------------------------------
+
+@app.get("/api/knowledge/search")
+async def search_knowledge_base(q: str, dataset_name: str = "teachings"):
+    """
+    Query Cognee's search engine directly via URL parameters.
+    Usage: GET /api/knowledge/search?q=your_search_query
+    """
+    if not q.strip():
+        raise HTTPException(status_code=400, detail="Query parameter 'q' cannot be empty.")
+
+    try:
+        results = await cognee.search(
+            query_type="INSIGHTS",
+            query_text=q,
+            dataset_name=dataset_name,
+        )
+        return {
+            "query": q,
+            "dataset": dataset_name,
+            "results": results,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Knowledge base query failed: {str(e)}",
+        )
+
+
+@app.get("/api/knowledge/graph")
+async def get_knowledge_graph(dataset_name: str = "teachings"):
+    """
+    Inspect the raw graph structure (nodes & edges) stored in Cognee.
+    Usage: GET /api/knowledge/graph
+    """
+    try:
+        graph_data = await cognee.prune.get_graph_data(dataset_name)
+        return {
+            "dataset": dataset_name,
+            "graph": graph_data,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch graph data: {str(e)}",
+        )
 
 
 @app.post("/api/reflect", response_model=ReflectResponse)
@@ -154,15 +203,6 @@ async def reflect(req: ReflectRequest):
             detail=f"Reflection generation failed: {str(e)}",
         )
 
-@app.get("/api/knowledge/graph")
-async def get_raw_graph(dataset_name: str = "teachings"):
-    """Returns raw nodes and edges stored in Cognee."""
-    try:
-        # Retrieve graph memory structure
-        graph_data = await cognee.prune.get_graph_data(dataset_name)
-        return {"graph": graph_data}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 # ---------------------------------------------------------
 # Frontend Static Mounting (Must remain at the bottom)
