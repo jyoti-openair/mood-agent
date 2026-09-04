@@ -491,3 +491,42 @@ async def ingest_pdf_library(dataset_name: str = "teachings"):
     await cognee.cognify(dataset_name=dataset_name)
 
     return f"Successfully ingested {len(file_paths)} PDF file(s) into dataset '{dataset_name}'."
+
+
+import shutil
+import tarfile
+from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File
+
+@app.post("/api/admin/upload-cognee", include_in_schema=False)
+async def upload_cognee_backup(
+    secret: str = "",
+    file: UploadFile = File(...)
+):
+    if secret != "my-one-time-secret":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    base_dir = Path(__file__).resolve().parent.parent
+    cognee_dir = base_dir / ".cognee"
+    tar_path = base_dir / "temp_cognee.tar.gz"
+
+    try:
+        # 1. Save uploaded tar.gz file locally on Render
+        with open(tar_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # 2. Extract tar.gz into the .cognee directory
+        with tarfile.open(tar_path, "r:gz") as tar:
+            tar.extractall(path=base_dir)
+
+        # 3. Clean up the temp archive file
+        if tar_path.exists():
+            tar_path.unlink()
+
+        return {
+            "status": "success",
+            "message": "Successfully unpacked .cognee directory on Render!",
+        }
+    except Exception as e:
+        if tar_path.exists():
+            tar_path.unlink()
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
