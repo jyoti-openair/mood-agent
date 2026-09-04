@@ -1,11 +1,24 @@
 import os
 from pathlib import Path
-
 from dotenv import load_dotenv
 
+# 1. Load environment variables from .env
 load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 
+# 2. Fix unexpanded `${PWD}` string in env variables BEFORE importing cognee
+BASE_DIR = Path(__file__).resolve().parent.parent
+for key in ["COGNEE_DATA_ROOT_DIRECTORY", "COGNEE_LOG_DIR", "DATA_ROOT_DIRECTORY"]:
+    val = os.environ.get(key, "")
+    if "${PWD}" in val:
+        os.environ[key] = val.replace("${PWD}", str(BASE_DIR))
+
+# Ensure fallback absolute path if not defined
+if not os.environ.get("COGNEE_DATA_ROOT_DIRECTORY"):
+    os.environ["COGNEE_DATA_ROOT_DIRECTORY"] = str((BASE_DIR / ".cognee" / "data").resolve())
+
+# 3. NOW import cognee safely
 import cognee
+
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
@@ -126,8 +139,6 @@ async def run_manual_ingest(secret: str = ""):
 @app.get("/api/ingest/status")
 def ingest_status():
     return _ingest_status
-
-
 
 
 @app.post("/api/reflect", response_model=ReflectResponse)
