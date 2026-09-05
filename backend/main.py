@@ -283,7 +283,7 @@ async def reflect(req: ReflectRequest):
         if "spending cap" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
             raise HTTPException(
                 status_code=503,
-                detail="Our AI brain has hit its monthly snack budget. Please come back tomorrow.",
+                detail="Our AI brain has hit its daily snack budget. Please come back tomorrow.",
             )
         raise HTTPException(
             status_code=429,
@@ -294,7 +294,7 @@ async def reflect(req: ReflectRequest):
         logger.error(f"Reflection generation failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="Our AI brain has hit its daily snack budget. Please come back tomorrow.",
+            detail="Something went wrong while generating your reflection. Please try again shortly.",
         )
 
 # ---------------------------------------------------------
