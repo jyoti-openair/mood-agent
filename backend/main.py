@@ -4,6 +4,10 @@ import shutil
 import tarfile
 from pathlib import Path
 from dotenv import load_dotenv
+import logging
+import litellm
+
+logger = logging.getLogger(__name__)
 
 # 1. Load environment variables from .env
 load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
@@ -273,12 +277,28 @@ async def reflect(req: ReflectRequest):
             image_url=image_url,
             source_excerpt_count=len(retrieval.get("raw_excerpts", [])),
         )
-    except Exception as e:
+
+    except litellm.RateLimitError as e:
+        logger.error(f"Reflection generation hit rate/billing limit: {e}")
+        if "spending cap" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "This app has reached its AI usage limit for now. "
+                    "Please try again later."
+                ),
+            )
         raise HTTPException(
-            status_code=500,
-            detail=f"Reflection generation failed: {str(e)}",
+            status_code=429,
+            detail="We're receiving a lot of requests right now. Please try again in a moment.",
         )
 
+    except Exception as e:
+        logger.error(f"Reflection generation failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong while generating your reflection. Please try again shortly.",
+        )
 
 # ---------------------------------------------------------
 # Frontend Static Mounting (Must remain at the bottom)
