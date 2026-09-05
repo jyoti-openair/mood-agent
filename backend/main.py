@@ -278,19 +278,24 @@ async def reflect(req: ReflectRequest):
             source_excerpt_count=len(retrieval.get("raw_excerpts", [])),
         )
 
-    except litellm.RateLimitError as e:
-        logger.error(f"Reflection generation hit rate/billing limit: {e}")
-        if "spending cap" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+    except Exception as e:
+        error_text = str(e).lower()
+
+        # Catch spending cap / quota / rate limit errors from Gemini / LiteLLM / Cognee
+        if any(x in error_text for x in [
+            "spending cap",
+            "resource_exhausted",
+            "rate limit",
+            "quota",
+            "429",
+            "exceeded its monthly",
+        ]):
+            logger.error(f"Reflection generation hit billing/rate limit: {e}")
             raise HTTPException(
                 status_code=503,
                 detail="Our AI brain has hit its daily snack budget. Please come back tomorrow.",
             )
-        raise HTTPException(
-            status_code=429,
-            detail="We're getting a lot of requests right now — try again in a moment.",
-        )
 
-    except Exception as e:
         logger.error(f"Reflection generation failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
