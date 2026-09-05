@@ -8,7 +8,6 @@ from openai import OpenAI
 import cognee
 from litellm import completion
 from cognee.modules.search.types import SearchType
-from backend.config import PDF_DIR
 
 
 # ---------------------------------------------------------

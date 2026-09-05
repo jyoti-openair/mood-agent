@@ -1,11 +1,12 @@
 /* ==========================================================================
-   Typography & Design Tokens
+   Typography & Design Tokens — Fibonacci Golden Ratio System
+   Sequence Scale: 1px, 2px, 3px, 5px, 8px, 13px, 21px, 34px, 55px, 89px, 144px
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
 
 :root {
-  /* Font Families */
-  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  /* Font Families: Newsreader for Deep Reading, Inter for UI, JetBrains Mono for Code/Tech */
+  --font-reading: 'Newsreader', Georgia, serif;
+  --font-heading: 'Newsreader', Georgia, serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
@@ -21,12 +22,31 @@
   --accent-teal-glow: rgba(20, 184, 166, 0.3);
   --accent-focus: #38bdf8;
 
-  /* Spacing Scale */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2.5rem;
+  /* Strict Fibonacci Spacing Scale */
+  --fib-1: 1px;
+  --fib-2: 2px;
+  --fib-3: 3px;
+  --fib-5: 5px;
+  --fib-8: 8px;
+  --fib-13: 13px;
+  --fib-21: 21px;
+  --fib-34: 34px;
+  --fib-55: 55px;
+  --fib-89: 89px;
+
+  /* Functional Fibonacci Semantic Aliases */
+  --space-xs: var(--fib-5);
+  --space-sm: var(--fib-8);
+  --space-md: var(--fib-13);
+  --space-lg: var(--fib-21);
+  --space-xl: var(--fib-34);
+  --space-xxl: var(--fib-55);
+
+  /* Fibonacci Typography Scale (px) */
+  --font-size-sm: 13px;
+  --font-size-base: 21px;  /* Optimal Golden Reading Size */
+  --font-size-lg: 34px;
+  --font-size-xl: 55px;
 
   /* Animation Tokens */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -41,14 +61,15 @@
 
 html {
   scroll-behavior: smooth;
-  background-color: var(--bg);
+  background-color: var(--bg-primary);
 }
 
 body {
-  background-color: var(--bg-primary);
+  background-color: transparent; /* Allows .ambient-background fixed layer to display clearly */
   color: var(--text-primary);
-  font-family: var(--font-sans);
-  line-height: 1.6;
+  font-family: var(--font-reading);
+  font-size: var(--font-size-base);
+  line-height: 1.618; /* Golden Ratio Line Height */
   min-height: 100vh;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -58,25 +79,26 @@ body {
 
 /* Keyboard Focus Outline */
 :focus-visible {
-  outline: 2px solid var(--accent-focus);
-  outline-offset: 4px;
+  outline: var(--fib-2) solid var(--accent-focus);
+  outline-offset: var(--fib-3);
 }
 
 .skip-link {
   position: absolute;
   top: -100px;
-  left: 1rem;
+  left: var(--fib-13);
   background: var(--accent-focus);
   color: #000;
-  padding: 0.5rem 1rem;
+  padding: var(--fib-8) var(--fib-13);
   font-weight: 600;
+  font-size: var(--font-size-sm);
   font-family: var(--font-sans);
   z-index: 100;
   transition: top var(--transition-fast);
 }
 
 .skip-link:focus {
-  top: 1rem;
+  top: var(--fib-13);
 }
 
 /* Ambient Radial Background */
@@ -95,40 +117,40 @@ body {
    ========================================================================== */
 .stack-badge {
   position: fixed;
-  top: var(--space-xl);
-  left: var(--space-lg);
+  top: var(--fib-34);
+  left: var(--fib-21);
   z-index: 10;
   width: 210px;
   background: var(--panel-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
-  padding: 0.875rem 1rem;
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+  border: var(--fib-1) solid var(--panel-border);
+  border-radius: var(--fib-8);
+  padding: var(--fib-13) var(--fib-21);
   font-family: var(--font-mono);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 var(--fib-13) var(--fib-34) rgba(0, 0, 0, 0.4);
   transition: transform var(--transition-smooth);
 }
 
 .stack-badge__header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: var(--fib-8);
+  padding-bottom: var(--fib-8);
+  margin-bottom: var(--fib-8);
+  border-bottom: var(--fib-1) solid rgba(255, 255, 255, 0.08);
 }
 
 .stack-badge__dot {
-  width: 6px;
-  height: 6px;
+  width: var(--fib-8);
+  height: var(--fib-8);
   background-color: var(--accent-teal);
   border-radius: 50%;
-  box-shadow: 0 0 8px var(--accent-teal);
+  box-shadow: 0 0 var(--fib-8) var(--accent-teal);
 }
 
 .stack-badge__title {
-  font-size: 0.65rem;
+  font-size: var(--fib-13);
   font-weight: 500;
   letter-spacing: 0.1em;
   color: var(--accent-teal);
@@ -139,14 +161,14 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 0.725rem;
+  gap: var(--fib-8);
+  font-size: var(--fib-13);
   color: var(--text-primary);
 }
 
 .stack-badge__list li span {
   display: block;
-  font-size: 0.58rem;
+  font-size: var(--fib-8);
   color: var(--text-muted);
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -159,7 +181,7 @@ body {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
+  padding: var(--space-xxl) var(--space-lg);
 }
 
 .hidden {
@@ -171,23 +193,23 @@ body {
    ========================================================================== */
 .hero {
   text-align: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0.25rem 0.75rem;
+  gap: var(--fib-8);
+  padding: var(--fib-5) var(--fib-13);
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--panel-border);
+  border: var(--fib-1) solid var(--panel-border);
   border-radius: 100px;
   margin-bottom: var(--space-md);
 }
 
 .badge__led {
-  width: 6px;
-  height: 6px;
+  width: var(--fib-8);
+  height: var(--fib-8);
   background: var(--accent-teal);
   border-radius: 50%;
   animation: pulse 2s infinite;
@@ -195,41 +217,43 @@ body {
 
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 0.382; transform: scale(0.85); }
 }
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   letter-spacing: 0.05em;
 }
 
 .headline {
   font-family: var(--font-heading);
-  font-size: 2.25rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-xs);
   color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .sub {
-  font-family: var(--font-sans);
+  font-family: var(--font-reading);
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--font-size-base);
   font-weight: 400;
+  font-style: italic;
 }
 
 /* ==========================================================================
-   Radial Mandala Layout & Geometry Theme
+   Radial Mandala Layout & Original Node Geometries
    ========================================================================== */
 .mandala-section {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: var(--space-md) 0;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-xxl);
 }
 
 .mandala {
@@ -255,7 +279,7 @@ body {
 /* Outer Geometric Guide Ring */
 .mandala::before {
   inset: 10px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border: var(--fib-1) dashed rgba(255, 255, 255, 0.12);
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
   animation: rotateSlow 180s linear infinite;
 }
@@ -263,7 +287,7 @@ body {
 /* Inner Core Mandala Ring */
 .mandala::after {
   inset: 22%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: var(--fib-1) solid rgba(255, 255, 255, 0.08);
   background: radial-gradient(circle, rgba(20, 184, 166, 0.03) 0%, transparent 70%);
 }
 
@@ -280,18 +304,18 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--fib-5);
   cursor: pointer;
   transition: transform var(--transition-smooth), filter var(--transition-smooth);
   z-index: 2;
 }
 
-/* Dynamic Mandala Circle Badge */
+/* Dynamic Mandala Circle Badge (Restored 64px Dimension) */
 .mandala-circle {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  border: 1px solid currentColor;
+  border: var(--fib-1) solid currentColor;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -309,7 +333,7 @@ body {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 1px solid var(--mood-color, var(--accent-teal));
+  border: var(--fib-1) solid var(--mood-color, var(--accent-teal));
   opacity: 0.2;
   transition: all var(--transition-smooth);
 }
@@ -320,7 +344,7 @@ body {
 }
 
 .mandala-node__label {
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   font-family: var(--font-heading);
   color: var(--text-secondary);
@@ -332,7 +356,6 @@ body {
 /* Interactive Hover & Focus Mandala States */
 .mandala-node:hover,
 .mandala-node:focus-visible {
-  transform: scale(1.12);
   z-index: 5;
 }
 
@@ -354,7 +377,7 @@ body {
   color: var(--text-primary);
 }
 
-/* Radial Placement for 10 Items around Mandala Circle */
+/* Restored Exact Radial Placement & 210px Translates for 10 Nodes */
 @media (min-width: 640px) {
   .mandala {
     display: block;
@@ -380,16 +403,16 @@ body {
   .mandala-node:nth-child(9)  { transform: rotate(288deg) translate(210px) rotate(-288deg); }
   .mandala-node:nth-child(10) { transform: rotate(324deg) translate(210px) rotate(-324deg); }
 
-  .mandala-node:nth-child(1):hover  { transform: rotate(0deg) translate(210px) rotate(0deg) scale(1.15); }
-  .mandala-node:nth-child(2):hover  { transform: rotate(36deg) translate(210px) rotate(-36deg) scale(1.15); }
-  .mandala-node:nth-child(3):hover  { transform: rotate(72deg) translate(210px) rotate(-72deg) scale(1.15); }
-  .mandala-node:nth-child(4):hover  { transform: rotate(108deg) translate(210px) rotate(-108deg) scale(1.15); }
-  .mandala-node:nth-child(5):hover  { transform: rotate(144deg) translate(210px) rotate(-144deg) scale(1.15); }
-  .mandala-node:nth-child(6):hover  { transform: rotate(180deg) translate(210px) rotate(-180deg) scale(1.15); }
-  .mandala-node:nth-child(7):hover  { transform: rotate(216deg) translate(210px) rotate(-216deg) scale(1.15); }
-  .mandala-node:nth-child(8):hover  { transform: rotate(252deg) translate(210px) rotate(-252deg) scale(1.15); }
-  .mandala-node:nth-child(9):hover  { transform: rotate(288deg) translate(210px) rotate(-288deg) scale(1.15); }
-  .mandala-node:nth-child(10):hover { transform: rotate(324deg) translate(210px) rotate(-324deg) scale(1.15); }
+  .mandala-node:nth-child(1):hover  { transform: rotate(0deg) translate(210px) rotate(0deg) scale(1.12); }
+  .mandala-node:nth-child(2):hover  { transform: rotate(36deg) translate(210px) rotate(-36deg) scale(1.12); }
+  .mandala-node:nth-child(3):hover  { transform: rotate(72deg) translate(210px) rotate(-72deg) scale(1.12); }
+  .mandala-node:nth-child(4):hover  { transform: rotate(108deg) translate(210px) rotate(-108deg) scale(1.12); }
+  .mandala-node:nth-child(5):hover  { transform: rotate(144deg) translate(210px) rotate(-144deg) scale(1.12); }
+  .mandala-node:nth-child(6):hover  { transform: rotate(180deg) translate(210px) rotate(-180deg) scale(1.12); }
+  .mandala-node:nth-child(7):hover  { transform: rotate(216deg) translate(210px) rotate(-216deg) scale(1.12); }
+  .mandala-node:nth-child(8):hover  { transform: rotate(252deg) translate(210px) rotate(-252deg) scale(1.12); }
+  .mandala-node:nth-child(9):hover  { transform: rotate(288deg) translate(210px) rotate(-288deg) scale(1.12); }
+  .mandala-node:nth-child(10):hover { transform: rotate(324deg) translate(210px) rotate(-324deg) scale(1.12); }
 }
 
 /* Fallback Grid Layout for Small Mobile Screens */
@@ -416,18 +439,18 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-xl) 0;
+  padding: var(--space-xxl) 0;
   gap: var(--space-md);
 }
 
 .loading-radar {
   width: 54px;
   height: 54px;
-  border: 2px solid var(--panel-border);
+  border: var(--fib-2) solid var(--panel-border);
   border-top-color: var(--accent-teal);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  box-shadow: 0 0 16px var(--accent-teal-glow);
+  box-shadow: 0 0 var(--fib-21) var(--accent-teal-glow);
 }
 
 @keyframes spin {
@@ -435,16 +458,16 @@ body {
 }
 
 /* ==========================================================================
-   Response Display Card & Dynamic Media
+   Response Display Card & Deep Reading Typography
    ========================================================================== */
 .response-card {
   background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
+  border: var(--fib-1) solid var(--panel-border);
+  border-radius: var(--fib-13);
   padding: var(--space-xl);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+  box-shadow: 0 var(--fib-21) var(--fib-55) rgba(0, 0, 0, 0.5);
 }
 
 .response-card__header {
@@ -453,22 +476,23 @@ body {
   align-items: center;
   margin-bottom: var(--space-md);
   padding-bottom: var(--space-sm);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: var(--fib-1) solid rgba(255, 255, 255, 0.08);
 }
 
 .response-card__kicker {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   color: var(--accent-teal);
   letter-spacing: 0.1em;
 }
 
 .response-card__body {
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  line-height: 1.65;
+  font-family: var(--font-reading);
+  font-size: var(--font-size-base);
+  line-height: 1.618;
   color: var(--text-primary);
   margin-bottom: var(--space-lg);
+  font-weight: 400;
 }
 
 .response-card__body p {
@@ -481,9 +505,9 @@ body {
 
 .response-card__image-wrap {
   margin-top: var(--space-lg);
-  border-radius: 8px;
+  border-radius: var(--fib-8);
   overflow: hidden;
-  border: 1px solid var(--panel-border);
+  border: var(--fib-1) solid var(--panel-border);
   background: rgba(0, 0, 0, 0.2);
 }
 
@@ -495,7 +519,7 @@ body {
 
 .response-card__meta {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: var(--font-size-sm);
   color: var(--text-muted);
   margin-bottom: var(--space-lg);
 }
@@ -503,15 +527,15 @@ body {
 .again-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--fib-8);
   background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--panel-border);
-  padding: 0.625rem 1.25rem;
-  border-radius: 6px;
+  border: var(--fib-1) solid var(--panel-border);
+  padding: var(--fib-8) var(--fib-21);
+  border-radius: var(--fib-5);
   font-family: var(--font-heading);
   font-weight: 500;
-  font-size: 0.825rem;
+  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -526,12 +550,12 @@ body {
    ========================================================================== */
 .error-box {
   background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: var(--fib-1) solid rgba(239, 68, 68, 0.3);
   color: #fca5a5;
   padding: var(--space-md);
-  border-radius: 6px;
+  border-radius: var(--fib-5);
   font-family: var(--font-sans);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   margin-top: var(--space-md);
 }
 
@@ -551,7 +575,7 @@ body {
   .stack-badge__list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 12px;
+    gap: var(--fib-13);
   }
 }
 

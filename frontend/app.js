@@ -155,6 +155,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Force-refresh favicon on load (Frontend Fix for Localhost Caching)
+  window.addEventListener('DOMContentLoaded', () => {
+    const favicon = document.getElementById('app-favicon');
+    if (favicon) {
+      const originalHref = favicon.href;
+      favicon.href = '';
+      favicon.href = originalHref;
+    }
+  });
+
   // Initialize
   renderMandala();
 });

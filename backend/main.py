@@ -44,7 +44,6 @@ except ImportError:
         SearchType = None
 
 from backend import cognee_service
-from backend.drive_ingest import download_pdfs_from_drive
 from backend.moods import MOODS, get_mood
 
 app = FastAPI(title="Mood Bridge")
