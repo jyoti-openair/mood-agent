@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mood Mandala — Wisdom Bridge</title>
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-J9BEK6DE75"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-J9BEK6DE75');
+</script>
+
+<!-- Clean Favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2308090c'/><circle cx='16' cy='16' r='12' fill='none' stroke='%2314b8a6' stroke-width='1.5' stroke-dasharray='3 2' opacity='0.7'/><circle cx='16' cy='16' r='7' fill='none' stroke='%2338bdf8' stroke-width='1.5'/><circle cx='16' cy='16' r='3' fill='%2314b8a6'/></svg>">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..600;1,14..32,300..600&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="../style.css" />
+
+<!-- Marked.js Markdown Engine -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+    // Configure marked to handle line breaks and GitHub Flavored Markdown
+    if (typeof marked !== 'undefined') {
+    marked.use({
+        gfm: true,
+        breaks: true
+    });
+    }
+
+    /**
+     * Universal Markdown Parser Helper
+     * Call this in app.js before setting response-body innerHTML.
+     */
+    function renderMarkdown(rawText) {
+    if (!rawText) return '';
+    if (typeof marked !== 'undefined') {
+        return marked.parse(rawText);
+    }
+    return rawText;
+    }
+</script>
+
+<style>
+/* Essential Markdown styles for the response card body */
+.response-card__body ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.response-card__body li {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.response-card__body p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.response-card__body strong {
+  font-weight: 600;
+  color: var(--color-text-primary, #f3f4f6);
+}
+</style>
+</head>
+<body>
+
+<!-- Background Layer -->
+<div class="ambient-background" aria-hidden="true"></div>
+
+<!-- Accessible Skip Link -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- Stacked Badges Wrapper -->
+<div class="badge-container" style="position: absolute; top: 1.5rem; left: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 20;">
+
+  <!-- Portfolio Link -->
+  <a href="/" style="text-decoration: none; color: inherit; display: block;">
+    <aside class="stack-badge" aria-label="Jyoti's Portfolio Link" style="position: static; margin: 0; cursor: pointer;">
+      <div class="stack-badge__header" style="border-bottom: none; padding-bottom: 0;">
+        <span class="stack-badge__dot" aria-hidden="true"></span>
+        <span class="stack-badge__title">Jyoti's Portfolio &rarr;</span>
+      </div>
+    </aside>
+  </a>
+
+  <!-- Tech Stack Information -->
+  <aside class="stack-badge" aria-label="System Tech Stack Information" style="position: static; margin: 0;">
+    <div class="stack-badge__header">
+      <span class="stack-badge__dot" aria-hidden="true"></span>
+      <span class="stack-badge__title">System Architecture</span>
+    </div>
+    <ul class="stack-badge__list" role="list">
+      <li><span>AI ENGINE</span> Google Gemini API</li>
+      <li><span>GRAPH MEMORY</span> Cognee</li>
+      <li><span>BACKEND</span> Python / FastAPI</li>
+      <li><span>FRONTEND</span> Vanilla JS (ES6+)</li>
+      <li><span>STYLING</span> Modern CSS Variables</li>
+    </ul>
+  </aside>
+
+</div>
+
+<!-- Main Viewport Area -->
+<main id="main-content" class="wrap">
+
+  <header class="hero">
+    <div class="badge" role="status">
+      <span class="badge__led" aria-hidden="true"></span>
+      <span class="eyebrow">Wisdom Bridge</span>
+    </div>
+    <h1 class="headline">What’s stirring in you right now?</h1>
+    <p class="sub">Select the frequency closest to your present state.</p>
+  </header>
+
+  <section class="mandala-section" aria-label="Interactive Mood Selection">
+    <div id="mandala" class="mandala" role="listbox" aria-label="Select a mood frequency"></div>
+  </section>
+
+  <!-- Async Feedback Region -->
+  <section id="loading-section" class="loading-section hidden" aria-live="polite" aria-busy="true">
+    <div class="loading-radar" aria-hidden="true">
+      <div class="loading-radar__sweep"></div>
+    </div>
+    <p id="loading-text">Listening into the archive...</p>
+  </section>
+
+  <!-- Response Display -->
+  <section id="response-section" class="response-section hidden" aria-live="polite">
+    <article class="response-card" tabindex="-1">
+      <header class="response-card__header">
+        <p class="response-card__kicker" id="response-kicker">ON ANXIOUSNESS</p>
+        <div class="response-card__signals" aria-hidden="true">
+          <span class="sig-bar"></span>
+          <span class="sig-bar"></span>
+          <span class="sig-bar"></span>
+        </div>
+      </header>
+
+      <div class="response-card__body" id="response-body"></div>
+      <p class="response-card__meta" id="response-meta"></p>
+
+      <button id="again-btn" class="again-btn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Recalibrate Frequency</span>
+      </button>
+    </article>
+  </section>
+
+  <!-- Error State -->
+  <section id="error-section" class="error-section hidden" aria-live="assertive">
+    <div id="error-text" class="error-box"></div>
+  </section>
+
+</main>
+
+<script src="../app.js"></script>
+</body>
+</html>

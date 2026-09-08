@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Jyoti Chhetri — Full-Stack Engineer</title>
+  <meta name="description" content="Full-Stack Engineer with 8+ years of experience delivering high-performance SaaS applications, multi-tenant database architectures, and REST APIs." />
+  <meta property="og:title" content="Jyoti Chhetri — Full-Stack Engineer" />
+  <meta property="og:description" content="Engineering scalable web systems with high throughput, clean logic, and architectural precision." />
+  <meta property="og:type" content="website" />
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J9BEK6DE75"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-J9BEK6DE75');
+  </script>
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwYyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjEyIiBmaWxsPSJub25lIiBzdHJva2U9IiMxNGI4YTYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtZGFzaGFycmF5PSIzIDIiIG9wYWNpdHk9IjAuNyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjcifSBmaWxsPSJub25lIiBzdHJva2U9IiMzOGJkZjgiIHN0cm9rZS13aWR0aD0iMS41L2I+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMyIgZmlsbD0iIzE0YjhhNiIvPjwvc3ZnPg==">
+  <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..600&family=Inter:ital,opsz,wght@0,14..32,300..600;1,14..32,300..600&family=JetBrains+Mono:wght@300;400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..400;1,6..72,300..400&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+  
+  <style>
+    /* Fibonacci Spatial System & Ethereal Gold Palette */
+    :root {
+      --fib-1: 1px;
+      --fib-2: 2px;
+      --fib-3: 3px;
+      --fib-5: 5px;
+      --fib-8: 8px;
+      --fib-13: 13px;
+      --fib-21: 21px;
+      --fib-34: 34px;
+      --fib-55: 55px;
+      --fib-89: 89px;
+      --fib-144: 144px;
+
+      --bg-dark: #070709;
+      --bg-card: rgba(18, 18, 22, 0.7);
+      --gold-primary: #d4af37;
+      --gold-light: #f3e5ab;
+      --gold-subtle: rgba(212, 175, 55, 0.25);
+      
+      --text-main: #f4f4f6;
+      --text-muted: #a1a1aa;
+      --border-subtle: rgba(212, 175, 55, 0.15);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Full-Screen Dynamic Background Canvas */
+    #art-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .golden-grid {
+      display: grid;
+      grid-template-columns: 1.618fr 1fr;
+      gap: var(--fib-34);
+    }
+
+    @media (max-width: 880px) {
+      .golden-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ambient-glow {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 100vh;
+      background: 
+        radial-gradient(circle at 80% 15%, rgba(212, 175, 55, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 20% 60%, rgba(245, 158, 11, 0.02) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .portfolio-hero {
+      padding-top: var(--fib-89);
+      padding-bottom: var(--fib-89);
+      position: relative;
+      z-index: 1;
+    }
+
+    .artistic-name {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(2.8rem, 6.2vw, 4.8rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      color: #ffffff;
+      margin-top: var(--fib-13);
+      margin-bottom: var(--fib-21);
+    }
+
+    .artistic-name span {
+      font-style: italic;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 400;
+    }
+
+    .art-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--fib-13);
+      padding: var(--fib-34);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .art-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+      opacity: 0;
+      transition: opacity 0.34s ease;
+    }
+
+    .art-card:hover {
+      border-color: rgba(212, 175, 55, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 var(--fib-21) var(--fib-34) rgba(0, 0, 0, 0.6),
+                  0 0 20px rgba(212, 175, 55, 0.05);
+    }
+
+    .art-card:hover::before {
+      opacity: 1;
+    }
+
+    .section-title {
+      font-family: 'Newsreader', serif;
+      font-size: var(--fib-34);
+      font-weight: 300;
+      color: #ffffff;
+      margin-bottom: var(--fib-34);
+      display: flex;
+      align-items: center;
+      gap: var(--fib-13);
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border-subtle), transparent);
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fib-34);
+    }
+
+    .timeline-node {
+      position: relative;
+      padding-left: var(--fib-34);
+      border-left: 1px solid var(--border-subtle);
+      transition: border-color 0.2s ease, opacity 0.3s ease;
+    }
+
+    .timeline-node::before {
+      content: '';
+      position: absolute;
+      left: -5px;
+      top: 6px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--gold-primary);
+      box-shadow: 0 0 10px var(--gold-primary);
+    }
+
+    .timeline-node.highlight {
+      border-left-color: var(--gold-light);
+      background: rgba(212, 175, 55, 0.03);
+      border-radius: 0 var(--fib-8) var(--fib-8) 0;
+    }
+
+    .skill-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--fib-5) var(--fib-13);
+      background: rgba(212, 175, 55, 0.03);
+      border: 1px solid rgba(212, 175, 55, 0.12);
+      border-radius: var(--fib-8);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-right: var(--fib-8);
+      margin-bottom: var(--fib-8);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    .skill-pill:hover, .skill-pill.active {
+      border-color: var(--gold-primary);
+      color: var(--gold-light);
+      background: rgba(212, 175, 55, 0.12);
+    }
+
+    .art-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--fib-8);
+      padding: var(--fib-13) var(--fib-21);
+      background: linear-gradient(135deg, #d4af37, #aa820a);
+      color: #070709;
+      font-weight: 600;
+      font-size: 0.88rem;
+      border-radius: var(--fib-8);
+      text-decoration: none;
+      box-shadow: 0 var(--fib-8) var(--fib-21) rgba(212, 175, 55, 0.2);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border: none;
+      cursor: pointer;
+    }
+
+    .art-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 var(--fib-13) var(--fib-34) rgba(212, 175, 55, 0.35);
+      background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+    }
+
+    .art-btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--gold-light);
+      box-shadow: none;
+    }
+
+    .art-btn-secondary:hover {
+      background: rgba(212, 175, 55, 0.08);
+      border-color: var(--gold-primary);
+    }
+
+    .nav-bar {
+      padding-top: var(--fib-34);
+      padding-bottom: var(--fib-21);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      transition: color 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--gold-light);
+    }
+
+    .eyebrow-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--fib-8);
+      padding: 4px var(--fib-13);
+      background: rgba(212, 175, 55, 0.06);
+      border: 1px solid var(--border-subtle);
+      border-radius: 50px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--gold-primary);
+    }
+
+    .eyebrow-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold-primary);
+      box-shadow: 0 0 6px var(--gold-primary);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(7, 7, 9, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-body {
+      background: #0d0d12;
+      border: 1px solid var(--gold-primary);
+      border-radius: var(--fib-13);
+      padding: var(--fib-34);
+      max-width: 650px;
+      width: 90%;
+      position: relative;
+      box-shadow: 0 var(--fib-34) var(--fib-89) rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: var(--fib-13);
+      right: var(--fib-21);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .arch-flow {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fib-13);
+      margin-top: var(--fib-21);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .arch-step {
+      padding: var(--fib-13);
+      background: rgba(212, 175, 55, 0.04);
+      border-left: 2px solid var(--gold-primary);
+      border-radius: 0 var(--fib-8) var(--fib-8) 0;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="art-canvas"></canvas>
+
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <nav class="wrap nav-bar">
+    <div style="font-family: 'Cinzel', serif; font-size: 0.95rem; letter-spacing: 0.1em; color: var(--gold-primary); font-weight: 500;">
+      JYOTI CHHETRI
+    </div>
+    <div style="display: flex; gap: var(--fib-21); align-items: center;">
+      <a href="#projects" class="nav-link">Work</a>
+      <a href="#experience" class="nav-link">Experience</a>
+      <a href="#skills" class="nav-link">Capabilities</a>
+      <a href="/mood-agent" class="nav-link" style="color: var(--gold-light);">Mood Agent &rarr;</a>
+    </div>
+  </nav>
+
+  <main id="main-content" class="wrap" style="position: relative; z-index: 1;">
+
+    <header class="portfolio-hero">
+      <div>
+        <div class="eyebrow-badge" style="margin-bottom: var(--fib-13);">
+          <span class="dot" aria-hidden="true"></span>
+          <span>FULL-STACK ENGINEER</span>
+        </div>
+        
+        <h1 class="artistic-name">
+          Transforming complex product needs into <span>fast, maintainable software</span>.
+        </h1>
+
+        <p style="max-width: 58ch; font-size: 1.05rem; line-height: 1.65; color: var(--text-muted); margin-bottom: var(--fib-34);">
+          Full-Stack Developer with 8+ years of experience delivering high-performance SaaS applications, multi-tenant databases, and optimized REST APIs.
+        </p>
+
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-muted); display: flex; gap: var(--fib-21); flex-wrap: wrap; align-items: center;">
+          <span style="color: var(--gold-primary);">📍 Kathmandu, Nepal</span>
+          <a href="https://github.com/jyoti-openair" target="_blank" class="nav-link" style="color: var(--gold-light);">GitHub ↗</a>
+          <a href="https://linkedin.com/in/jyoti-chhetri" target="_blank" class="nav-link" style="color: var(--gold-light);">LinkedIn ↗</a>
+        </div>
+      </div>
+    </header>
+
+    <section id="projects" style="padding-bottom: var(--fib-89);">
+      <h2 class="section-title">Selected Works</h2>
+      
+      <div class="golden-grid">
+        <article class="art-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div class="eyebrow-badge" style="margin-bottom: var(--fib-13); background: rgba(212, 175, 55, 0.08);">
+              <span style="color: var(--gold-light);">INTERACTIVE AI AGENT</span>
+            </div>
+            <h3 style="font-family: 'Newsreader', serif; font-size: var(--fib-34); font-weight: 400; color: #fff; margin-bottom: var(--fib-13);">
+              Mood Agent — Wisdom Bridge
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.65; margin-bottom: var(--fib-21);">
+              An interactive cognitive web application that translates emotional inputs into structured philosophical insights. Built with Google Gemini API, Cognee Graph Memory, Python FastAPI, and reactive ES6+ JavaScript.
+            </p>
+          </div>
+
+          <div style="display: flex; gap: var(--fib-13); flex-wrap: wrap; margin-top: var(--fib-21);">
+            <a href="/mood-agent" class="art-btn">
+              Launch Application
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <button class="art-btn art-btn-secondary" onclick="toggleModal(true)">
+              System Architecture ⚙️
+            </button>
+          </div>
+        </article>
+
+        <div style="display: flex; flex-direction: column; gap: var(--fib-21);">
+          <div class="art-card">
+            <h4 style="color: #fff; font-size: 1rem; margin-bottom: var(--fib-8); font-weight: 500;">Multi-Tenant SaaS Core</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">
+              Architected scalable multi-tenant backends with Node.js, LoopBack 4, and PostgreSQL handling high-volume enterprise data workflows.
+            </p>
+          </div>
+
+          <div class="art-card">
+            <h4 style="color: #fff; font-size: 1rem; margin-bottom: var(--fib-8); font-weight: 500;">Database Query Optimization</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">
+              Refactored PostgreSQL queries and indexing routines, successfully reducing API query response times by <strong style="color: var(--gold-light);">30–40%</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="experience" style="padding-bottom: var(--fib-89);">
+      <div class="golden-grid">
+        <div>
+          <h2 class="section-title">Experience</h2>
+          
+          <div class="timeline">
+            <div class="timeline-node" data-tags="Node.js PostgreSQL LoopBack 4 AngularJS JavaScript">
+              <h3 style="color: #fff; font-size: 1.1rem; font-weight: 500;">Full-Stack Developer (Node.js / AngularJS)</h3>
+              <p style="color: var(--gold-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; margin-top: var(--fib-3); margin-bottom: var(--fib-13);">Growzz Software Ltd | 2019 – 2025</p>
+              <ul style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; padding-left: var(--fib-13);">
+                <li>Architected scalable SaaS backends with Node.js, LoopBack 4, and PostgreSQL.</li>
+                <li>Reduced overall database query execution times by <strong style="color: var(--gold-light);">30–40%</strong> via targeted indexing and query refactoring.</li>
+                <li>Created modular frontend UI component libraries, cutting feature dev time by <strong style="color: var(--gold-light);">25%</strong>.</li>
+              </ul>
+            </div>
+
+            <div class="timeline-node" data-tags="REST APIs PostgreSQL Express JavaScript">
+              <h3 style="color: #fff; font-size: 1.1rem; font-weight: 500;">Web Application Developer</h3>
+              <p style="color: var(--gold-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; margin-top: var(--fib-3); margin-bottom: var(--fib-13);">Volo Group Ltd | 2018 – 2019</p>
+              <ul style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; padding-left: var(--fib-13);">
+                <li>Designed relational database schemas and REST API layers supporting core enterprise workflows.</li>
+                <li>Integrated third-party data pipelines and engineered background processing services.</li>
+              </ul>
+            </div>
+
+            <div class="timeline-node" data-tags="JavaScript REST APIs Git">
+              <h3 style="color: #fff; font-size: 1.1rem; font-weight: 500;">Web Developer</h3>
+              <p style="color: var(--gold-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; margin-top: var(--fib-3); margin-bottom: var(--fib-13);">Everyone Social Inc. & testRTC Ltd | 2016 – 2017</p>
+              <ul style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; padding-left: var(--fib-13);">
+                <li>Engineered responsive, accessible frontends complying with strict client performance budgets.</li>
+                <li>Diagnosed and optimized browser rendering bottlenecks during Agile sprint cycles.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div id="skills">
+          <h2 class="section-title">Capabilities</h2>
+          
+          <div style="margin-bottom: var(--fib-34);">
+            <h4 style="font-family: 'JetBrains Mono', monospace; color: var(--gold-light); font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: var(--fib-13); opacity: 0.8;">TECHNICAL STACK (CLICK TO FILTER)</h4>
+            <div>
+              <span class="skill-pill" onclick="filterTimeline('JavaScript')">JavaScript (ES6+)</span>
+              <span class="skill-pill" onclick="filterTimeline('TypeScript')">TypeScript</span>
+              <span class="skill-pill" onclick="filterTimeline('Node.js')">Node.js</span>
+              <span class="skill-pill" onclick="filterTimeline('LoopBack 4')">LoopBack 4</span>
+              <span class="skill-pill" onclick="filterTimeline('Express')">Express</span>
+              <span class="skill-pill" onclick="filterTimeline('PostgreSQL')">PostgreSQL</span>
+              <span class="skill-pill" onclick="filterTimeline('MongoDB')">MongoDB</span>
+              <span class="skill-pill" onclick="filterTimeline('FastAPI')">FastAPI</span>
+              <span class="skill-pill" onclick="filterTimeline('Python')">Python</span>
+              <span class="skill-pill" onclick="filterTimeline('AngularJS')">AngularJS</span>
+              <span class="skill-pill" onclick="filterTimeline('REST APIs')">REST APIs</span>
+              <span class="skill-pill" onclick="filterTimeline('Git')">Git</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: var(--fib-34);">
+            <h4 style="font-family: 'JetBrains Mono', monospace; color: var(--gold-light); font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: var(--fib-13); opacity: 0.8;">EDUCATION</h4>
+            <p style="color: #fff; font-size: 0.95rem; font-weight: 500;">B.Sc. Information Management</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">College of Applied Business (2007–2011)</p>
+          </div>
+
+          <div>
+            <h4 style="font-family: 'JetBrains Mono', monospace; color: var(--gold-light); font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: var(--fib-13); opacity: 0.8;">LANGUAGES</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
+              Nepali <span style="opacity:0.4;">(Native)</span> • English <span style="opacity:0.4;">(C1/C2)</span> • German <span style="opacity:0.4;">(A1/A2)</span>
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <div id="arch-modal" class="modal-overlay" onclick="if(event.target === this) toggleModal(false)">
+    <div class="modal-body">
+      <button class="modal-close" onclick="toggleModal(false)">&times;</button>
+      <h3 style="font-family: 'Newsreader', serif; font-size: 1.5rem; color: var(--gold-light); margin-bottom: var(--fib-8);">
+        Mood Agent Architecture Flow
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
+        A high-level view of the interaction flow powering the wisdom synthesis pipeline:
+      </p>
+      
+      <div class="arch-flow">
+        <div class="arch-step">
+          <strong style="color: #fff;">1. Client Event:</strong> User inputs emotional state via reactive Vanilla JS interface.
+        </div>
+        <div class="arch-step">
+          <strong style="color: #fff;">2. API Layer:</strong> Request dispatched to Python FastAPI backend service via REST.
+        </div>
+        <div class="arch-step">
+          <strong style="color: #fff;">3. Knowledge Graph Memory:</strong> Query context resolved using Cognee Graph Memory.
+        </div>
+        <div class="arch-step">
+          <strong style="color: #fff;">4. AI Reasoning Engine:</strong> Synthesized prompt routed to Google Gemini API for insight generation.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generative Interactive Constellation Background Script
+    const canvas = document.getElementById('art-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let particles = [];
+    let mouse = { x: null, y: null, radius: 150 };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.3;
+        this.vy = (Math.random() - 0.5) * 0.3;
+        this.radius = Math.random() * 1.5 + 0.5;
+        this.alpha = Math.random() * 0.5 + 0.2;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212, 175, 55, ${this.alpha})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#d4af37';
+        ctx.fill();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      const particleCount = Math.floor((canvas.width * canvas.height) / 18000);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(212, 175, 55, ${0.12 - dist / 1000})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    resizeCanvas();
+    animate();
+
+    // Modal Controller
+    function toggleModal(show) {
+      const modal = document.getElementById('arch-modal');
+      if (show) modal.classList.add('active');
+      else modal.classList.remove('active');
+    }
+
+    // Interactive Skill Tag Filter
+    function filterTimeline(skill) {
+      const nodes = document.querySelectorAll('.timeline-node');
+      const pills = document.querySelectorAll('.skill-pill');
+
+      pills.forEach(pill => {
+        if (pill.innerText.includes(skill)) {
+          pill.classList.toggle('active');
+        } else {
+          pill.classList.remove('active');
+        }
+      });
+
+      nodes.forEach(node => {
+        const tags = node.getAttribute('data-tags') || '';
+        if (tags.includes(skill)) {
+          node.classList.add('highlight');
+        } else {
+          node.classList.remove('highlight');
+        }
+      });
+    }
+  </script>
+</body>
+</html>

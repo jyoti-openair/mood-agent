@@ -1,0 +1,465 @@
+import os
+import json
+import urllib.parse
+from pathlib import Path
+
+from dotenv import load_dotenv
+from openai import OpenAI
+import cognee
+from litellm import completion
+from cognee.modules.search.types import SearchType
+
+
+# ---------------------------------------------------------
+# Environment
+# ---------------------------------------------------------
+
+load_dotenv(
+    Path(__file__).resolve().parent.parent / ".env",
+    override=True,
+)
+
+
+# ---------------------------------------------------------
+# Paths
+# ---------------------------------------------------------
+
+PDF_DIR = (
+    Path(__file__).resolve().parent.parent
+    / "pdfs"
+)
+
+
+# ---------------------------------------------------------
+# Gemini / OpenAI-compatible client
+# ---------------------------------------------------------
+
+_client: OpenAI | None = None
+
+
+def _get_client() -> OpenAI:
+    global _client
+
+    if _client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+
+        if not api_key:
+            raise RuntimeError(
+                "GEMINI_API_KEY is not set"
+            )
+
+        _client = OpenAI(
+            api_key=api_key,
+            base_url=(
+                "https://generativelanguage.googleapis.com/"
+                "v1beta/openai/"
+            ),
+        )
+
+    return _client
+
+
+# ---------------------------------------------------------
+# System instruction
+# ---------------------------------------------------------
+
+SYSTEM_INSTRUCTION = """
+You are a warm, compassionate guide helping people navigate difficult emotions.
+
+You are given:
+1. The user's mood and personal context.
+2. Retrieved teachings and material (summaries and raw excerpts).
+
+STRICT KNOWLEDGE GROUNDING RULES:
+1. "response": Write a warm, compassionate 2-3 paragraph response addressed directly to the user.
+2. ALL insights, explanations, reasons, and practical guidance in the response MUST BE EXTRACTED EXCLUSIVELY from the provided retrieved material.
+3. Do NOT introduce external knowledge, personal assumptions, unmentioned psychological theories, or general advice.
+4. If the provided material does not contain enough information to explain or address the mood, explicitly state that the available teachings do not contain sufficient detail for this specific reflection.
+5. Do NOT mention PDFs, documents, search processes, knowledge bases, or retrieval systems.
+6. Treat all retrieved insights as reflective perspectives rather than medical, psychological, or scientific facts.
+7. Present key concepts using simple paragraphs or clear bullet points with inline bolding (* **Concept**: Explanation).
+
+CRITICAL OUTPUT FORMAT:
+You MUST respond strictly in valid JSON format with no markdown wrappers outside the JSON:
+
+{
+    "response": "<written reflection extracted exclusively from provided material>",
+}
+"""
+
+
+# ---------------------------------------------------------
+# Generate teaching and prompt
+# ---------------------------------------------------------
+
+def generate_teaching_and_prompt(
+    mood_label: str,
+    user_context: str,
+    raw_excerpts: list,
+    graph_answers: list,
+) -> dict:
+    context_text = "\n---\n".join([str(e) for e in (raw_excerpts + graph_answers)])
+
+    system_prompt = (
+        "You are a warm, compassionate guide helping people navigate difficult emotions.\n"
+        "Your answers MUST be derived ONLY and EXCLUSIVELY from the provided Source Documents.\n\n"
+        "STRICT GROUNDING RULES:\n"
+        "1. Do NOT use any external knowledge, personal assumptions, or general training data.\n"
+        "2. If the answer cannot be directly and fully answered using ONLY the Source Documents, "
+        "state explicitly: 'The ingested PDF documents do not contain sufficient information to answer this.'\n"
+        "3. Do not mention PDFs, documents, or source material in the response.\n\n"
+        "FORMATTING RULES:\n"
+        "1. Do NOT use markdown section headers (such as #, ##, * **, -- or ###).\n"
+        "2. Do NOT use horizontal rules or line dividers (such as --- or ***).\n"
+        "3. Present key concepts using inline bolding for key phrases and clean bullet points (*).\n"
+        "4. Keep the tone warm, clear, and highly readable."
+    )
+
+    user_prompt = f"""
+SOURCE DOCUMENTS:
+{context_text}
+
+USER MOOD: {mood_label}
+USER CONTEXT: {user_context}
+
+INSTRUCTION: Provide a clear, gentle reflection for the user using ONLY the SOURCE DOCUMENTS provided above.
+"""
+
+    response = completion(
+        model=os.environ.get("LLM_MODEL", "gemini/gemini-1.5-flash"),
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.0,
+    )
+
+    content = response.choices[0].message.content
+
+
+    print("\n========== TEACHING GENERATION ==========", content, "\n=========================================\n")
+
+    return {
+        "response": content,
+        "image_prompt": f"A peaceful, atmospheric background matching the mood: {mood_label}",
+    }
+
+
+
+# ---------------------------------------------------------
+# Bridge mood to teaching
+# ---------------------------------------------------------
+
+def bridge_mood_to_teaching(
+    mood_label: str,
+    user_context: str,
+    graph_answers: list[str],
+    raw_excerpts: list[str],
+) -> str:
+
+    print("\n========== BRIDGE START ==========")
+
+    client = _get_client()
+
+    model = os.getenv(
+        "GEMINI_MODEL",
+        "gemini-3.6-flash",
+    )
+
+    print(
+        "DEBUG: Bridge Gemini model =",
+        repr(model),
+    )
+
+    retrieved_material = (
+        "REASONED SUMMARIES FROM THE KNOWLEDGE GRAPH:\n"
+        + "\n---\n".join(
+            graph_answers or ["(none found)"]
+        )
+    )
+
+    retrieved_material += (
+        "\n\nRAW EXCERPTS FROM THE PDFS "
+        "(may contain stories/examples):\n"
+    )
+
+    retrieved_material += "\n---\n".join(
+        raw_excerpts or ["(none found)"]
+    )
+
+    prompt = f"""
+User's mood: {mood_label}
+
+User's own words about what's going on:
+{user_context or "(nothing typed)"}
+
+{retrieved_material}
+
+Write the response now.
+"""
+
+    print(
+        "DEBUG: Bridge prompt length =",
+        len(prompt),
+    )
+
+    print("DEBUG: Calling Gemini from bridge...")
+
+    try:
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": SYSTEM_INSTRUCTION,
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            temperature=0.8,
+            max_tokens=700,
+        )
+
+        print(
+            "DEBUG: Bridge Gemini response received"
+        )
+
+    except Exception as e:
+
+        print("\n========== BRIDGE GEMINI ERROR ==========")
+        print(
+            "Exception type:",
+            type(e).__name__,
+        )
+        print(
+            "Exception:",
+            repr(e),
+        )
+        print(
+            "Model:",
+            repr(model),
+        )
+        print(
+            "API key configured:",
+            bool(
+                os.getenv(
+                    "GEMINI_API_KEY"
+                )
+            ),
+        )
+        print(
+            "=========================================\n"
+        )
+
+        raise
+
+    return response.choices[0].message.content
+
+
+# ---------------------------------------------------------
+# Query Cognee
+# ---------------------------------------------------------
+
+async def query_teaching(
+    mood: dict | str,
+    dataset_name: str = "teachings",
+    top_k: int = 5,
+) -> dict:
+    """
+    Query the Cognee knowledge base for teachings relevant to the
+    user's current mood.
+
+    Runs two Cognee searches:
+      - GRAPH_COMPLETION: a reasoned, synthesized answer that
+        draws on entity/relationship connections in the graph
+        (used as "graph_answers").
+      - CHUNKS: the actual raw text chunks that back that answer,
+        pulled straight from the ingested PDFs (used as
+        "raw_excerpts").
+
+    NOTE: this function is now async because cognee.search()
+    is async. Callers must `await query_teaching(...)`.
+    """
+
+    if isinstance(mood, dict):
+        mood_label = mood.get("label", "")
+    else:
+        mood_label = str(mood)
+
+    if not mood_label:
+        return {
+            "graph_answers": [],
+            "raw_excerpts": [],
+        }
+
+    query = (
+        f"What do the teachings in this knowledge base say about "
+        f"experiencing and moving through {mood_label}? "
+        "Include any guidance, reframes, or practices mentioned."
+    )
+
+    print("\n========== COGNEE QUERY START ==========")
+    print("Mood label:", mood_label)
+    print("Query:", query)
+
+    graph_answers: list[str] = []
+    raw_excerpts: list[str] = []
+
+    # -----------------------------------------------------
+    # 1. Reasoned graph completion
+    # -----------------------------------------------------
+    try:
+        graph_results = await cognee.search(
+            query_text=query,
+            query_type=SearchType.GRAPH_COMPLETION,
+            datasets=[dataset_name],
+        )
+
+        for item in graph_results or []:
+            if isinstance(item, str):
+                graph_answers.append(item)
+            elif isinstance(item, dict):
+                text = (
+                    item.get("text")
+                    or item.get("answer")
+                    or item.get("content")
+                )
+                if text:
+                    graph_answers.append(str(text))
+            else:
+                graph_answers.append(str(item))
+
+        graph_answers = graph_answers[:top_k]
+
+        print(
+            "DEBUG: Cognee graph_answers retrieved =",
+            len(graph_answers),
+        )
+
+    except Exception as e:
+        print("DEBUG: Cognee GRAPH_COMPLETION search failed:", repr(e))
+
+    # -----------------------------------------------------
+    # 2. Raw supporting excerpts / chunks
+    # -----------------------------------------------------
+    try:
+        chunk_results = await cognee.search(
+            query_text=query,
+            query_type=SearchType.CHUNKS,
+            datasets=[dataset_name],
+        )
+
+        for item in chunk_results or []:
+            if isinstance(item, str):
+                raw_excerpts.append(item)
+            elif isinstance(item, dict):
+                text = (
+                    item.get("text")
+                    or item.get("chunk")
+                    or item.get("content")
+                )
+                if text:
+                    raw_excerpts.append(str(text))
+            else:
+                raw_excerpts.append(str(item))
+
+        raw_excerpts = raw_excerpts[:top_k]
+
+        print(
+            "DEBUG: Cognee raw_excerpts retrieved =",
+            len(raw_excerpts),
+        )
+
+    except Exception as e:
+        print("DEBUG: Cognee CHUNKS search failed:", repr(e))
+
+    print("========== COGNEE QUERY END ==========\n")
+
+    return {
+        "graph_answers": graph_answers,
+        "raw_excerpts": raw_excerpts,
+    }
+
+
+# ---------------------------------------------------------
+# Ingest PDF library
+# ---------------------------------------------------------
+
+
+async def ingest_pdf_library(dataset_name: str = "teachings"):
+    target_dir = PDF_DIR.resolve()
+    pdf_files = list(target_dir.glob("*.pdf"))
+
+    if not pdf_files:
+        return f"No PDFs found in {target_dir} to ingest."
+
+    file_paths = [str(f) for f in pdf_files]
+
+    # Optional: Configure smaller chunk sizes to prevent text truncation
+    cognee.config.chunk_size = 512
+    cognee.config.chunk_overlap = 64
+
+    # 1. Clear previous dataset state if clean re-ingestion is needed
+    # await cognee.prune.prune_data()
+
+    # 2. Add files to Cognee
+    await cognee.add(file_paths, dataset_name=dataset_name)
+
+    # 3. Build knowledge graph across ALL chunks
+    await cognee.cognify(dataset_name=dataset_name)
+
+    return f"Successfully ingested {len(file_paths)} PDF file(s) into dataset '{dataset_name}'."
+
+
+import gc
+
+from pypdf import PdfReader, PdfWriter
+
+
+async def chunk_and_ingest_pdf(file_path: str, dataset_name: str = "teachings", chunk_size: int = 10) -> dict:
+    """Splits a single PDF into 10-page chunks and ingests them sequentially to avoid OOM errors."""
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"PDF file not found at: {file_path}")
+
+    reader = PdfReader(file_path)
+    total_pages = len(reader.pages)
+    base_name = Path(file_path).stem
+
+    print(f"Starting chunked ingestion for: {base_name} ({total_pages} pages)")
+
+    chunks_processed = 0
+
+    for start_page in range(0, total_pages, chunk_size):
+        end_page = min(start_page + chunk_size, total_pages)
+        writer = PdfWriter()
+
+        for page_num in range(start_page, end_page):
+            writer.add_page(reader.pages[page_num])
+
+        chunk_filename = f"{base_name}_part_{start_page + 1}_to_{end_page}.pdf"
+
+        # Save mini PDF chunk
+        with open(chunk_filename, "wb") as f:
+            writer.write(f)
+
+        try:
+            # Ingest chunk into Cognee
+            await cognee.add(chunk_filename, dataset_name)
+            await cognee.cognify(dataset_name)
+            chunks_processed += 1
+        finally:
+            # Clean up mini PDF file from disk
+            if os.path.exists(chunk_filename):
+                os.remove(chunk_filename)
+            
+            # Force garbage collection to free RAM
+            gc.collect()
+
+    return {
+        "file": base_name,
+        "total_pages": total_pages,
+        "chunks_processed": chunks_processed,
+    }
