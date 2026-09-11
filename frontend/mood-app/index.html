@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 <title>Mood Mandala — Wisdom Bridge</title>
 
 <!-- Google Analytics -->
@@ -50,10 +50,10 @@ gtag('config', 'G-J9BEK6DE75');
 </script>
 
 <style>
-/* Essential Markdown styles for the response card body */
+/* Base typography & markdown overrides */
 .response-card__body ul {
   margin: 1rem 0;
-  padding-left: 1.5rem;
+  padding-left: 1.25rem;
   list-style-type: disc;
 }
 
@@ -71,6 +71,66 @@ gtag('config', 'G-J9BEK6DE75');
   font-weight: 600;
   color: var(--color-text-primary, #f3f4f6);
 }
+
+/* Mobile Responsiveness Improvements */
+.badge-container {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 20;
+  max-width: calc(100vw - 3rem);
+}
+
+/* Ensure buttons and interactives hit mobile touch target sizes (≥44px) */
+.again-btn,
+.mandala-node {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+@media (max-width: 768px) {
+  /* Convert absolute sidebar badges into static in-flow elements on small viewports */
+  .badge-container {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  /* Wrap layout adjustments */
+  .wrap {
+    padding: 1.25rem 1rem 3rem 1rem;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .headline {
+    font-size: 1.75rem;
+    line-height: 1.25;
+  }
+
+  .sub {
+    font-size: 1rem;
+  }
+
+  /* Adjust response card spacing for small viewports */
+  .response-card {
+    padding: 1.25rem;
+  }
+
+  /* Compact Tech Stack listing on mobile */
+  .stack-badge__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.5rem;
+  }
+}
 </style>
 </head>
 <body>
@@ -81,38 +141,36 @@ gtag('config', 'G-J9BEK6DE75');
 <!-- Accessible Skip Link -->
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<!-- Stacked Badges Wrapper -->
-<div class="badge-container" style="position: absolute; top: 1.5rem; left: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 20;">
-
-  <!-- Portfolio Link -->
-  <a href="/" style="text-decoration: none; color: inherit; display: block;">
-    <aside class="stack-badge" aria-label="Jyoti's Portfolio Link" style="position: static; margin: 0; cursor: pointer;">
-      <div class="stack-badge__header" style="border-bottom: none; padding-bottom: 0;">
-        <span class="stack-badge__dot" aria-hidden="true"></span>
-        <span class="stack-badge__title">Jyoti's Portfolio &rarr;</span>
-      </div>
-    </aside>
-  </a>
-
-  <!-- Tech Stack Information -->
-  <aside class="stack-badge" aria-label="System Tech Stack Information" style="position: static; margin: 0;">
-    <div class="stack-badge__header">
-      <span class="stack-badge__dot" aria-hidden="true"></span>
-      <span class="stack-badge__title">System Architecture</span>
-    </div>
-    <ul class="stack-badge__list" role="list">
-      <li><span>AI ENGINE</span> Google Gemini API</li>
-      <li><span>GRAPH MEMORY</span> Cognee</li>
-      <li><span>BACKEND</span> Python / FastAPI</li>
-      <li><span>FRONTEND</span> Vanilla JS (ES6+)</li>
-      <li><span>STYLING</span> Modern CSS Variables</li>
-    </ul>
-  </aside>
-
-</div>
-
 <!-- Main Viewport Area -->
 <main id="main-content" class="wrap">
+
+  <!-- Stacked Badges Wrapper (Moves inside normal flow on mobile viewports) -->
+  <div class="badge-container">
+    <!-- Portfolio Link -->
+    <a href="/" style="text-decoration: none; color: inherit; display: block;">
+      <aside class="stack-badge" aria-label="Jyoti's Portfolio Link" style="position: static; margin: 0; cursor: pointer;">
+        <div class="stack-badge__header" style="border-bottom: none; padding-bottom: 0;">
+          <span class="stack-badge__dot" aria-hidden="true"></span>
+          <span class="stack-badge__title">Jyoti's Portfolio &rarr;</span>
+        </div>
+      </aside>
+    </a>
+
+    <!-- Tech Stack Information -->
+    <aside class="stack-badge" aria-label="System Tech Stack Information" style="position: static; margin: 0;">
+      <div class="stack-badge__header">
+        <span class="stack-badge__dot" aria-hidden="true"></span>
+        <span class="stack-badge__title">System Architecture</span>
+      </div>
+      <ul class="stack-badge__list" role="list">
+        <li><span>AI ENGINE</span> Google Gemini API</li>
+        <li><span>GRAPH MEMORY</span> Cognee</li>
+        <li><span>BACKEND</span> Python / FastAPI</li>
+        <li><span>FRONTEND</span> Vanilla JS (ES6+)</li>
+        <li><span>STYLING</span> Modern CSS Variables</li>
+      </ul>
+    </aside>
+  </div>
 
   <header class="hero">
     <div class="badge" role="status">
